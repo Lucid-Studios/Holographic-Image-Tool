@@ -26,6 +26,16 @@ Reserved phase commands are already exposed and return deterministic "not implem
 - `.\Invoke-HOPNGFormation.ps1`
 - `.\Bind-HOPNGToOE.ps1`
 
+## Governance
+
+Lucid Technologies repository standards for AI governance, citizen science, data handling, and GitHub workflow are recorded in [docs/LUCID_TECHNOLOGIES_STANDARDS.md](/D:/Holographic%20Data%20Tool/docs/LUCID_TECHNOLOGIES_STANDARDS.md).
+
+Community and contribution guidance lives in:
+
+- [.github/CONTRIBUTING.md](/D:/Holographic%20Data%20Tool/.github/CONTRIBUTING.md)
+- [.github/SECURITY.md](/D:/Holographic%20Data%20Tool/.github/SECURITY.md)
+- [.github/CODE_OF_CONDUCT.md](/D:/Holographic%20Data%20Tool/.github/CODE_OF_CONDUCT.md)
+
 ## Artifact Layout
 
 A v1 artifact is a loose-sidecar set stored in one directory:

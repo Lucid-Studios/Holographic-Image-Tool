@@ -1,0 +1,49 @@
+name: Bug report
+description: Report a defect in artifact creation, validation, trust, visibility, or tooling.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Describe the bug and the observed impact.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction
+      description: Provide commands, files, and steps to reproduce the issue.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: dropdown
+    id: risk_area
+    attributes:
+      label: Primary risk area
+      options:
+        - Artifact integrity
+        - Signature / trust envelope
+        - Visibility policy
+        - Schema / parsing
+        - Data handling
+        - AI misuse / safety
+        - Other
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I reviewed existing issues first.
+          required: true
+        - label: This issue does not disclose secrets, private keys, or restricted data.
+          required: true
