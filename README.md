@@ -35,6 +35,10 @@ Community and contribution guidance lives in:
 - [.github/CONTRIBUTING.md](/D:/Holographic%20Data%20Tool/.github/CONTRIBUTING.md)
 - [.github/SECURITY.md](/D:/Holographic%20Data%20Tool/.github/SECURITY.md)
 - [.github/CODE_OF_CONDUCT.md](/D:/Holographic%20Data%20Tool/.github/CODE_OF_CONDUCT.md)
+- [docs/LICENSING_POLICY.md](/D:/Holographic%20Data%20Tool/docs/LICENSING_POLICY.md)
+- [docs/DCO_CLA_POLICY.md](/D:/Holographic%20Data%20Tool/docs/DCO_CLA_POLICY.md)
+- [docs/AI_USAGE_DISCLOSURE.md](/D:/Holographic%20Data%20Tool/docs/AI_USAGE_DISCLOSURE.md)
+- [docs/DATA_CLASSIFICATION.md](/D:/Holographic%20Data%20Tool/docs/DATA_CLASSIFICATION.md)
 
 ## Artifact Layout
 

@@ -63,6 +63,10 @@ Lucid Technologies standardizes repository collaboration through:
 - security reporting guidance
 - explicit contribution rules and testing expectations
 - structured commit and review hygiene
+- DCO-by-default contribution attestation
+- case-by-case CLA escalation for ownership-sensitive work
+- AI usage disclosure for materially assisted contributions
+- repository data-classification rules for public-safe collaboration
 
 Primary reference set:
 
@@ -79,6 +83,10 @@ For this repository, the standards above currently mean:
 - trust material, signatures, and provenance are first-class repository concerns
 - documentation should distinguish implementation fact from future intent
 - examples must not include committed private keys or restricted data
+- material AI assistance should be disclosed in pull requests
+- DCO sign-off is the default contribution attestation rule
+- CLA escalation is reserved for higher-risk ownership or licensing cases
+- repository content should be reviewed under the Public / Internal / Restricted / Cryptic model
 
 ## Review Checklist
 
@@ -89,6 +97,9 @@ Before merging a standards-sensitive change, reviewers should ask:
 - Does it introduce new data handling obligations?
 - Does it weaken validation, authenticity, or public-safe boundaries?
 - Does the documentation overstate compliance, certainty, or safety?
+- Is the licensing position still accurate and are third-party rights clear?
+- Was AI use disclosed when it materially influenced the contribution?
+- Was the touched data classified correctly?
 
 ## Source Links
 
