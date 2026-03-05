@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "oan.hopng_transform_history.v0.1.0.json",
+  "title": "HOPNG Transform History",
+  "type": "object",
+  "required": ["schema", "schemaVersion", "artifactId", "transforms"],
+  "properties": {
+    "schema": { "const": "oan.hopng_transform_history" },
+    "schemaVersion": { "const": "0.1.0" },
+    "artifactId": { "type": "string" },
+    "transforms": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/transform" }
+    }
+  },
+  "$defs": {
+    "transform": {
+      "type": "object",
+      "required": ["stepId", "kind", "timestampUtc", "description"],
+      "properties": {
+        "stepId": { "type": "string" },
+        "kind": { "type": "string" },
+        "timestampUtc": { "type": "string", "format": "date-time" },
+        "description": { "type": "string" },
+        "actor": { "type": "string" }
+      }
+    }
+  }
+}

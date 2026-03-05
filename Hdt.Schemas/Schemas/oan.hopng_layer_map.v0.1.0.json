@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "oan.hopng_layer_map.v0.1.0.json",
+  "title": "HOPNG Layer Map",
+  "type": "object",
+  "required": ["schema", "schemaVersion", "artifactId", "layers"],
+  "properties": {
+    "schema": { "const": "oan.hopng_layer_map" },
+    "schemaVersion": { "const": "0.1.0" },
+    "artifactId": { "type": "string" },
+    "layers": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/layer" }
+    }
+  },
+  "$defs": {
+    "layer": {
+      "type": "object",
+      "required": [
+        "layerId",
+        "universeId",
+        "modality",
+        "projectionRole",
+        "neutralPlane",
+        "coordinateFrame"
+      ],
+      "properties": {
+        "layerId": { "type": "string" },
+        "universeId": { "type": "string" },
+        "modality": { "type": "string" },
+        "projectionRole": { "type": "string" },
+        "neutralPlane": { "type": "number" },
+        "coordinateFrame": { "$ref": "#/$defs/coordinateFrame" }
+      }
+    },
+    "coordinateFrame": {
+      "type": "object",
+      "required": ["xAxis", "yAxis", "zAxis", "units"],
+      "properties": {
+        "xAxis": { "type": "string" },
+        "yAxis": { "type": "string" },
+        "zAxis": { "type": "string" },
+        "units": { "type": "string" }
+      }
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "oan.hopng_depth_field.v0.1.0.json",
+  "title": "HOPNG Depth Field",
+  "type": "object",
+  "required": ["schema", "schemaVersion", "artifactId", "planes"],
+  "properties": {
+    "schema": { "const": "oan.hopng_depth_field" },
+    "schemaVersion": { "const": "0.1.0" },
+    "artifactId": { "type": "string" },
+    "planes": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/plane" }
+    }
+  },
+  "$defs": {
+    "plane": {
+      "type": "object",
+      "required": ["layerId", "neutralPlane", "minimumZ", "maximumZ"],
+      "properties": {
+        "layerId": { "type": "string" },
+        "neutralPlane": { "type": "number" },
+        "minimumZ": { "type": "number" },
+        "maximumZ": { "type": "number" }
+      }
+    }
+  }
+}

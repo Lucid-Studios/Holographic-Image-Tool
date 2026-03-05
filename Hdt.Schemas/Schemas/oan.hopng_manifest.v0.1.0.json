@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "oan.hopng_manifest.v0.1.0.json",
+  "title": "HOPNG Manifest",
+  "type": "object",
+  "required": [
+    "schema",
+    "schemaVersion",
+    "artifactId",
+    "projectionFile",
+    "sidecars",
+    "fileDigests",
+    "visibilityPolicy"
+  ],
+  "properties": {
+    "schema": { "const": "oan.hopng_manifest" },
+    "schemaVersion": { "const": "0.1.0" },
+    "artifactId": { "type": "string" },
+    "displayName": { "type": "string" },
+    "createdUtc": { "type": "string", "format": "date-time" },
+    "projectionFile": { "type": "string" },
+    "sidecars": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/sidecarReference" }
+    },
+    "fileDigests": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/fileDigest" }
+    },
+    "visibilityPolicy": { "$ref": "#/$defs/visibilityPolicy" },
+    "phaseReservations": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "$defs": {
+    "sidecarReference": {
+      "type": "object",
+      "required": ["role", "schema", "schemaVersion", "path"],
+      "properties": {
+        "role": { "type": "string" },
+        "schema": { "type": "string" },
+        "schemaVersion": { "type": "string" },
+        "path": { "type": "string" },
+        "required": { "type": "boolean" }
+      }
+    },
+    "fileDigest": {
+      "type": "object",
+      "required": ["role", "path", "sha256"],
+      "properties": {
+        "role": { "type": "string" },
+        "path": { "type": "string" },
+        "sha256": { "type": "string" }
+      }
+    },
+    "visibilityPolicy": {
+      "type": "object",
+      "required": [
+        "primeSafeProjection",
+        "machineReadableLayersAllowed",
+        "crypticPointersAllowed",
+        "approvedMetadataFields",
+        "crypticReferences"
+      ],
+      "properties": {
+        "primeSafeProjection": { "type": "boolean" },
+        "machineReadableLayersAllowed": { "type": "boolean" },
+        "crypticPointersAllowed": { "type": "boolean" },
+        "approvedMetadataFields": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "crypticReferences": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/crypticReference" }
+        }
+      }
+    },
+    "crypticReference": {
+      "type": "object",
+      "required": ["id", "pointerUri", "policy"],
+      "properties": {
+        "id": { "type": "string" },
+        "pointerUri": { "type": "string" },
+        "policy": { "type": "string" },
+        "summary": { "type": "string" }
+      }
+    }
+  }
+}

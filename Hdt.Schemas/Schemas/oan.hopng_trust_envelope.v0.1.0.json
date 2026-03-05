@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "oan.hopng_trust_envelope.v0.1.0.json",
+  "title": "HOPNG Trust Envelope",
+  "type": "object",
+  "required": [
+    "schema",
+    "schemaVersion",
+    "artifactId",
+    "signer",
+    "keyId",
+    "issuedUtc",
+    "publicKey",
+    "signingScope"
+  ],
+  "properties": {
+    "schema": { "const": "oan.hopng_trust_envelope" },
+    "schemaVersion": { "const": "0.1.0" },
+    "artifactId": { "type": "string" },
+    "signer": { "type": "string" },
+    "keyId": { "type": "string" },
+    "issuedUtc": { "type": "string", "format": "date-time" },
+    "publicKey": { "type": "string" },
+    "signingScope": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "signatureFile": { "type": "string" }
+  }
+}

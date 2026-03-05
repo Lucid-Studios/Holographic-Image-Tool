@@ -1,0 +1,9 @@
+bin/
+obj/
+.vs/
+TestResults/
+examples/**/*.ed25519.private.key
+examples/**/*.private.public.key
+examples/manual*
+examples/hello-hopng*
+tmpcli/
