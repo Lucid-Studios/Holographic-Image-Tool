@@ -11,6 +11,7 @@ public sealed class CliRunner
     private readonly HopngArtifactValidator _validator = new();
     private readonly HopngArtifactLoader _loader = new();
     private readonly HopngArtifactInspector _inspector = new();
+    private readonly GovernedProjectionDerivationService _projectionDerivationService = new();
 
     public CliRunner(TextWriter writer)
     {
@@ -35,7 +36,7 @@ public sealed class CliRunner
                 "new" => CreateArtifact(options),
                 "validate" => ValidateArtifact(options),
                 "show" => ShowArtifact(options),
-                "merge-layers" => Reserved("Merge-HOPNGLayers", 2),
+                "merge-layers" => MergeLayers(options),
                 "render-phase-stack" => Reserved("Render-HOPNGPhaseStack", 3),
                 "compare-surfaces" => Reserved("Compare-HOPNGSurfaces", 3),
                 "invoke-formation" => Reserved("Invoke-HOPNGFormation", 5),
@@ -96,6 +97,31 @@ public sealed class CliRunner
         return validation.IsValid ? 0 : (int)validation.Errors[0].Code;
     }
 
+    private int MergeLayers(CliOptions options)
+    {
+        var result = _projectionDerivationService.Derive(options.Require("path"));
+        Write(new
+        {
+            artifactId = result.ArtifactId,
+            status = result.Status.ToString(),
+            isLawfullyFormed = result.IsLawfullyFormed,
+            legibilitySatisfied = result.LegibilitySatisfied,
+            projectionIntegritySatisfied = result.ProjectionIntegritySatisfied,
+            participatingUniverses = result.ParticipatingUniverses,
+            participatingRelations = result.ParticipatingRelations,
+            ruleTrace = result.RuleTrace,
+            issues = result.Issues,
+            validationErrors = result.ValidationIssues
+        }, options.Json);
+
+        return result.Status switch
+        {
+            Hdt.Core.Models.ProjectionFormationStatus.LawfullyFormed => 0,
+            Hdt.Core.Models.ProjectionFormationStatus.StructurallyIncomplete => 24,
+            _ => 25
+        };
+    }
+
     private int Reserved(string commandName, int phase)
     {
         _writer.WriteLine(ReservedPhaseCommand.BuildMessage(commandName, phase));
@@ -115,7 +141,8 @@ public sealed class CliRunner
         _writer.WriteLine("  new --output-dir <dir> --name <artifact> [--display-name <text>] [--signer <name>] [--key-id <id>] [--json]");
         _writer.WriteLine("  validate --path <manifest-or-png> [--json]");
         _writer.WriteLine("  show --path <manifest-or-png> [--view prime|privileged] [--json]");
-        _writer.WriteLine("  merge-layers | render-phase-stack | compare-surfaces | invoke-formation | bind-oe");
+        _writer.WriteLine("  merge-layers --path <manifest-or-png> [--json]");
+        _writer.WriteLine("  render-phase-stack | compare-surfaces | invoke-formation | bind-oe");
     }
 
     private void Write(object value, bool asJson)

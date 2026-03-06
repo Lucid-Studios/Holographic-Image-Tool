@@ -7,6 +7,7 @@ namespace Hdt.Core.Services;
 public sealed class HopngArtifactInspector
 {
     private readonly ArtifactDiagnosticService _diagnosticService = new();
+    private readonly GovernedProjectionDerivationService _projectionDerivationService = new();
 
     public object BuildPrimeSafeView(LoadedHopngArtifact artifact, ValidationResult validationResult)
     {
@@ -53,6 +54,7 @@ public sealed class HopngArtifactInspector
         depthField = artifact.DepthField,
         hashSidecar = artifact.HashSidecar,
         signatureSidecar = artifact.SignatureSidecar,
+        governedProjection = _projectionDerivationService.Derive(artifact, validationResult),
         diagnostics = _diagnosticService.Analyze(artifact, validationResult),
         isValid = validationResult.IsValid,
         errors = validationResult.Errors

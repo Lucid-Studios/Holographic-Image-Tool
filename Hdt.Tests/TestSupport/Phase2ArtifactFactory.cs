@@ -148,6 +148,48 @@ public static class Phase2ArtifactFactory
         return new HopngArtifactLoader().Load(artifact.Layout.ManifestPath);
     }
 
+    public static LoadedHopngArtifact RefreshIntegrity(LoadedHopngArtifact artifact)
+    {
+        var jsonStore = new ArtifactJsonStore();
+        var loader = new HopngArtifactLoader();
+        var current = loader.Load(artifact.Layout.ManifestPath);
+        var refreshedDigests = current.Manifest.FileDigests
+            .Select(digest => digest with
+            {
+                Sha256 = ArtifactHashing.ComputeSha256(Path.Combine(current.Layout.DirectoryPath, digest.Path))
+            })
+            .ToList();
+        var refreshedManifest = current.Manifest with
+        {
+            FileDigests = refreshedDigests
+        };
+
+        jsonStore.WriteCanonical(current.Layout.ManifestPath, refreshedManifest);
+        current = loader.Load(current.Layout.ManifestPath);
+
+        var manifestCanonicalSha256 = ArtifactHashing.ComputeSha256(File.ReadAllBytes(current.Layout.ManifestPath));
+        var hashSidecar = current.HashSidecar with
+        {
+            ManifestCanonicalSha256 = manifestCanonicalSha256,
+            ArtifactSetSha256 = ArtifactHashing.ComputeArtifactSetSha256(refreshedDigests, manifestCanonicalSha256),
+            FileDigests = refreshedDigests
+        };
+        jsonStore.WriteCanonical(current.Layout.HashPath, hashSidecar);
+
+        var signatureService = new Ed25519SignatureService();
+        var privateKey = File.ReadAllText(current.Layout.PrivateKeyPath).Trim();
+        var hashBytes = File.ReadAllBytes(current.Layout.HashPath);
+        var signature = signatureService.Sign(privateKey, hashBytes);
+        var signatureSidecar = current.SignatureSidecar with
+        {
+            SignedObjectSha256 = ArtifactHashing.ComputeSha256(hashBytes),
+            SignatureBase64 = Convert.ToBase64String(signature)
+        };
+        jsonStore.WriteCanonical(current.Layout.SignaturePath, signatureSidecar);
+
+        return loader.Load(current.Layout.ManifestPath);
+    }
+
     private static SidecarReference Sidecar(string role, string schema, string path) =>
         new()
         {

@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Hdt.Cli;
+using Hdt.Core.Services;
 using Hdt.Tests.TestSupport;
 using System.Text.Json;
 
@@ -38,5 +39,38 @@ public sealed class CliTests
 
         var validateDocument = JsonDocument.Parse(validateJson);
         validateDocument.RootElement.GetProperty("isValid").GetBoolean().Should().BeTrue();
+    }
+
+    [Fact]
+    public void Cli_Merge_Layers_Returns_Governed_Projection_Status()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var artifact = Phase2ArtifactFactory.CreateValid(tempDir, "cli-phase2");
+        var output = new StringWriter();
+        var runner = new CliRunner(output);
+
+        var exitCode = runner.Execute(["merge-layers", "--path", artifact.Layout.ManifestPath, "--json"]);
+        var mergeJson = output.ToString();
+        using var mergeDocument = JsonDocument.Parse(mergeJson);
+
+        exitCode.Should().Be(0, mergeJson);
+        mergeDocument.RootElement.GetProperty("status").GetString().Should().Be("LawfullyFormed");
+        mergeDocument.RootElement.GetProperty("ruleTrace")[0].GetProperty("ruleId").GetString().Should().Be("rule-1");
+    }
+
+    [Fact]
+    public void Cli_Merge_Layers_Returns_Nonzero_When_Derivation_Is_Unsupported()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var artifact = new HopngArtifactBuilder().Create(new NewHopngRequest(tempDir, "cli-phase1", "tester", "key-1"));
+        var output = new StringWriter();
+        var runner = new CliRunner(output);
+
+        var exitCode = runner.Execute(["merge-layers", "--path", artifact.Layout.ManifestPath, "--json"]);
+        var mergeJson = output.ToString();
+        using var mergeDocument = JsonDocument.Parse(mergeJson);
+
+        exitCode.Should().Be(25, mergeJson);
+        mergeDocument.RootElement.GetProperty("status").GetString().Should().Be("FlattenedOrUnsupported");
     }
 }

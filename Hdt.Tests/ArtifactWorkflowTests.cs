@@ -2,6 +2,7 @@ using FluentAssertions;
 using System.Text.Json;
 using Hdt.Core.Security;
 using Hdt.Core.Services;
+using Hdt.Core.Models;
 using Hdt.Core.Validation;
 using Hdt.Tests.TestSupport;
 
@@ -240,5 +241,72 @@ public sealed class ArtifactWorkflowTests
         json.Should().Contain("gluingManifest");
         json.Should().Contain("projectionRules");
         json.Should().Contain("legibilityProfile");
+    }
+
+    [Fact]
+    public void Governed_Projection_Derivation_Is_Deterministic_And_Ordered()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var artifact = Phase2ArtifactFactory.CreateValid(tempDir, "phase2-derivation");
+        var service = new GovernedProjectionDerivationService();
+
+        var first = service.Derive(artifact.Layout.ManifestPath);
+        var second = service.Derive(artifact.Layout.ManifestPath);
+
+        first.Status.Should().Be(ProjectionFormationStatus.LawfullyFormed);
+        first.RuleTrace.Select(trace => trace.RuleId).Should().ContainInOrder("rule-1", "rule-2");
+        first.Should().BeEquivalentTo(second);
+    }
+
+    [Fact]
+    public void Governed_Projection_Becomes_Incomplete_When_Required_Universe_Is_Not_Derived()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var artifact = Phase2ArtifactFactory.CreateValid(tempDir, "phase2-missing-universe");
+        JsonFile.Mutate(artifact.Layout.ProjectionRulesPath, json =>
+        {
+            var rules = json["rules"]!.AsArray();
+            rules.RemoveAt(1);
+        });
+        artifact = Phase2ArtifactFactory.RefreshIntegrity(artifact);
+
+        var result = new GovernedProjectionDerivationService().Derive(artifact.Layout.ManifestPath);
+
+        result.Status.Should().Be(ProjectionFormationStatus.StructurallyIncomplete);
+        result.Issues.Should().Contain(issue => issue.Contains("cryptic-support", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Governed_Projection_Becomes_Incomplete_When_Required_Relation_Is_Not_Present()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var artifact = Phase2ArtifactFactory.CreateValid(tempDir, "phase2-missing-relation");
+        JsonFile.Mutate(artifact.Layout.GluingManifestPath, json =>
+        {
+            json["relations"] = new System.Text.Json.Nodes.JsonArray();
+        });
+        artifact = Phase2ArtifactFactory.RefreshIntegrity(artifact);
+
+        var result = new GovernedProjectionDerivationService().Derive(artifact.Layout.ManifestPath);
+
+        result.Status.Should().Be(ProjectionFormationStatus.StructurallyIncomplete);
+        result.Issues.Should().Contain(issue => issue.Contains("glue-1", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Projection_Comparison_Distinguishes_Formed_From_Flattened_Artifacts()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var phase2Artifact = Phase2ArtifactFactory.CreateValid(tempDir, "phase2-formed");
+        var phase1Artifact = new HopngArtifactBuilder().Create(new NewHopngRequest(tempDir, "phase1-flat", "tester", "key-1"));
+        var derivationService = new GovernedProjectionDerivationService();
+        var comparisonService = new ProjectionSupportComparisonService();
+
+        var comparison = comparisonService.Compare(
+            derivationService.Derive(phase2Artifact.Layout.ManifestPath),
+            derivationService.Derive(phase1Artifact.Layout.ManifestPath));
+
+        comparison.Classification.Should().Be("formed-vs-flattened");
+        comparison.Signals.Should().Contain(signal => signal.Contains("lacks governed derivation support", StringComparison.Ordinal));
     }
 }
