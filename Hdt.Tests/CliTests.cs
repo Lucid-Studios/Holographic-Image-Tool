@@ -73,4 +73,29 @@ public sealed class CliTests
         exitCode.Should().Be(25, mergeJson);
         mergeDocument.RootElement.GetProperty("status").GetString().Should().Be("FlattenedOrUnsupported");
     }
+
+    [Fact]
+    public void Cli_Compare_Surfaces_Classifies_Formed_Vs_Flattened()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var phase2Artifact = Phase2ArtifactFactory.CreateValid(tempDir, "cli-compare-phase2");
+        var phase1Artifact = new HopngArtifactBuilder().Create(new NewHopngRequest(tempDir, "cli-compare-phase1", "tester", "key-1"));
+        var output = new StringWriter();
+        var runner = new CliRunner(output);
+
+        var exitCode = runner.Execute(
+        [
+            "compare-surfaces",
+            "--left", phase2Artifact.Layout.ManifestPath,
+            "--right", phase1Artifact.Layout.ManifestPath,
+            "--json"
+        ]);
+        var comparisonJson = output.ToString();
+        using var comparisonDocument = JsonDocument.Parse(comparisonJson);
+
+        exitCode.Should().Be(25, comparisonJson);
+        comparisonDocument.RootElement.GetProperty("classification").GetString().Should().Be("formed-vs-flattened");
+        comparisonDocument.RootElement.GetProperty("leftStatus").GetString().Should().Be("LawfullyFormed");
+        comparisonDocument.RootElement.GetProperty("rightStatus").GetString().Should().Be("FlattenedOrUnsupported");
+    }
 }

@@ -4,6 +4,15 @@ namespace Hdt.Core.Services;
 
 public sealed class ProjectionSupportComparisonService
 {
+    private readonly GovernedProjectionDerivationService _derivationService = new();
+
+    public ProjectionSupportComparisonResult Compare(string leftPath, string rightPath)
+    {
+        var left = _derivationService.Derive(leftPath);
+        var right = _derivationService.Derive(rightPath);
+        return Compare(left, right);
+    }
+
     public ProjectionSupportComparisonResult Compare(GovernedProjectionResult left, GovernedProjectionResult right)
     {
         var classification = Classify(left.Status, right.Status);
@@ -16,6 +25,8 @@ public sealed class ProjectionSupportComparisonService
             LeftStatus = left.Status,
             RightStatus = right.Status,
             Classification = classification,
+            LeftIssues = left.Issues,
+            RightIssues = right.Issues,
             Signals = signals
         };
     }

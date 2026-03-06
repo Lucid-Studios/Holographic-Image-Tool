@@ -12,6 +12,7 @@ public sealed class CliRunner
     private readonly HopngArtifactLoader _loader = new();
     private readonly HopngArtifactInspector _inspector = new();
     private readonly GovernedProjectionDerivationService _projectionDerivationService = new();
+    private readonly ProjectionSupportComparisonService _projectionComparisonService = new();
 
     public CliRunner(TextWriter writer)
     {
@@ -38,7 +39,7 @@ public sealed class CliRunner
                 "show" => ShowArtifact(options),
                 "merge-layers" => MergeLayers(options),
                 "render-phase-stack" => Reserved("Render-HOPNGPhaseStack", 3),
-                "compare-surfaces" => Reserved("Compare-HOPNGSurfaces", 3),
+                "compare-surfaces" => CompareSurfaces(options),
                 "invoke-formation" => Reserved("Invoke-HOPNGFormation", 5),
                 "bind-oe" => Reserved("Bind-HOPNGToOE", 6),
                 _ => UnknownCommand(command)
@@ -122,6 +123,32 @@ public sealed class CliRunner
         };
     }
 
+    private int CompareSurfaces(CliOptions options)
+    {
+        var result = _projectionComparisonService.Compare(
+            options.Require("left"),
+            options.Require("right"));
+
+        Write(new
+        {
+            leftArtifactId = result.LeftArtifactId,
+            rightArtifactId = result.RightArtifactId,
+            leftStatus = result.LeftStatus.ToString(),
+            rightStatus = result.RightStatus.ToString(),
+            classification = result.Classification,
+            leftIssues = result.LeftIssues,
+            rightIssues = result.RightIssues,
+            signals = result.Signals
+        }, options.Json);
+
+        return result.Classification switch
+        {
+            "equivalent-lawful-support" => 0,
+            "equivalent-incomplete-support" or "formed-vs-incomplete" => 24,
+            _ => 25
+        };
+    }
+
     private int Reserved(string commandName, int phase)
     {
         _writer.WriteLine(ReservedPhaseCommand.BuildMessage(commandName, phase));
@@ -142,7 +169,8 @@ public sealed class CliRunner
         _writer.WriteLine("  validate --path <manifest-or-png> [--json]");
         _writer.WriteLine("  show --path <manifest-or-png> [--view prime|privileged] [--json]");
         _writer.WriteLine("  merge-layers --path <manifest-or-png> [--json]");
-        _writer.WriteLine("  render-phase-stack | compare-surfaces | invoke-formation | bind-oe");
+        _writer.WriteLine("  compare-surfaces --left <manifest-or-png> --right <manifest-or-png> [--json]");
+        _writer.WriteLine("  render-phase-stack | invoke-formation | bind-oe");
     }
 
     private void Write(object value, bool asJson)

@@ -309,4 +309,27 @@ public sealed class ArtifactWorkflowTests
         comparison.Classification.Should().Be("formed-vs-flattened");
         comparison.Signals.Should().Contain(signal => signal.Contains("lacks governed derivation support", StringComparison.Ordinal));
     }
+
+    [Fact]
+    public void Projection_Comparison_Distinguishes_Formed_From_Incomplete_Artifacts()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var formedArtifact = Phase2ArtifactFactory.CreateValid(tempDir, "phase2-formed-compare");
+        var incompleteArtifact = Phase2ArtifactFactory.CreateValid(tempDir, "phase2-incomplete-compare");
+        JsonFile.Mutate(incompleteArtifact.Layout.ProjectionRulesPath, json =>
+        {
+            var rules = json["rules"]!.AsArray();
+            rules.RemoveAt(1);
+        });
+        incompleteArtifact = Phase2ArtifactFactory.RefreshIntegrity(incompleteArtifact);
+
+        var derivationService = new GovernedProjectionDerivationService();
+        var comparisonService = new ProjectionSupportComparisonService();
+        var comparison = comparisonService.Compare(
+            derivationService.Derive(formedArtifact.Layout.ManifestPath),
+            derivationService.Derive(incompleteArtifact.Layout.ManifestPath));
+
+        comparison.Classification.Should().Be("formed-vs-incomplete");
+        comparison.RightIssues.Should().Contain(issue => issue.Contains("cryptic-support", StringComparison.Ordinal));
+    }
 }
