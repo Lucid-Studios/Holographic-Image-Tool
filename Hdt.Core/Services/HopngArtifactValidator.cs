@@ -9,6 +9,14 @@ namespace Hdt.Core.Services;
 
 public sealed class HopngArtifactValidator
 {
+    private static readonly IReadOnlyDictionary<string, string> Phase2RoleSchemaMap = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["universe-layer"] = "oan.hopng_universe_layer",
+        ["gluing-manifest"] = "oan.hopng_gluing_manifest",
+        ["projection-rules"] = "oan.hopng_projection_rules",
+        ["legibility-profile"] = "oan.hopng_legibility_profile"
+    };
+
     private readonly ArtifactJsonStore _jsonStore = new();
     private readonly HopngArtifactLoader _loader = new();
     private readonly Ed25519SignatureService _signatureService = new();
@@ -59,11 +67,14 @@ public sealed class HopngArtifactValidator
             return result;
         }
 
+        ValidateReferencedSidecars(artifact, result);
+        ValidateOptionalPhase2Schemas(artifact, result);
         ValidateLawfulStructure(artifact, result);
         ValidateDigests(artifact, result);
         ValidateHashSidecar(artifact, result);
         ValidateSignature(artifact, result);
         ValidateVisibilityPolicy(artifact, result);
+        ValidateRelationalStructure(artifact, result);
 
         return result;
     }
@@ -132,6 +143,51 @@ public sealed class HopngArtifactValidator
         }
     }
 
+    private void ValidateOptionalPhase2Schemas(LoadedHopngArtifact artifact, ValidationResult result)
+    {
+        foreach (var pair in Phase2RoleSchemaMap)
+        {
+            var sidecar = artifact.Manifest.Sidecars.FirstOrDefault(candidate => string.Equals(candidate.Role, pair.Key, StringComparison.Ordinal));
+            if (sidecar is null)
+            {
+                continue;
+            }
+
+            var path = Path.Combine(artifact.Layout.DirectoryPath, sidecar.Path);
+            if (File.Exists(path))
+            {
+                ValidateSchema(path, pair.Value, result);
+            }
+        }
+    }
+
+    private static void ValidateReferencedSidecars(LoadedHopngArtifact artifact, ValidationResult result)
+    {
+        foreach (var sidecar in artifact.Manifest.Sidecars)
+        {
+            var fullPath = Path.Combine(artifact.Layout.DirectoryPath, sidecar.Path);
+            if (!File.Exists(fullPath))
+            {
+                result.Errors.Add(new ValidationIssue(ValidationErrorCode.MissingSidecar, $"Referenced sidecar '{sidecar.Role}' is missing.", fullPath));
+                continue;
+            }
+
+            if (sidecar.Role is "hash" or "signature")
+            {
+                continue;
+            }
+
+            var digestExists = artifact.Manifest.FileDigests.Any(digest =>
+                string.Equals(digest.Role, sidecar.Role, StringComparison.Ordinal)
+                && string.Equals(digest.Path, sidecar.Path, StringComparison.Ordinal));
+
+            if (!digestExists)
+            {
+                result.Errors.Add(new ValidationIssue(ValidationErrorCode.MissingSidecar, $"Referenced sidecar '{sidecar.Role}' is missing a manifest digest entry.", artifact.Layout.ManifestPath));
+            }
+        }
+    }
+
     private static void ValidateDigests(LoadedHopngArtifact artifact, ValidationResult result)
     {
         foreach (var digest in artifact.Manifest.FileDigests)
@@ -147,6 +203,187 @@ public sealed class HopngArtifactValidator
             if (!string.Equals(actualDigest, digest.Sha256, StringComparison.OrdinalIgnoreCase))
             {
                 result.Errors.Add(new ValidationIssue(ValidationErrorCode.DigestMismatch, $"Digest mismatch for '{digest.Path}'.", fullPath));
+            }
+        }
+    }
+
+    private static void ValidateRelationalStructure(LoadedHopngArtifact artifact, ValidationResult result)
+    {
+        var hasPhase2References = artifact.Manifest.Sidecars.Any(sidecar => Phase2RoleSchemaMap.ContainsKey(sidecar.Role));
+        if (!hasPhase2References)
+        {
+            return;
+        }
+
+        var universeLayerSet = artifact.UniverseLayerSet;
+        if (universeLayerSet is null)
+        {
+            result.Errors.Add(new ValidationIssue(ValidationErrorCode.MissingSidecar, "Phase 2 relational artifacts must declare a universe-layer sidecar.", artifact.Layout.ManifestPath));
+            return;
+        }
+
+        ValidateUniverseLayerSet(artifact, universeLayerSet, result);
+        ValidateGluingManifest(artifact, universeLayerSet, result);
+        ValidateProjectionRules(artifact, universeLayerSet, result);
+        ValidateLegibilityProfile(artifact, universeLayerSet, result);
+    }
+
+    private static void ValidateUniverseLayerSet(LoadedHopngArtifact artifact, UniverseLayerSet universeLayerSet, ValidationResult result)
+    {
+        if (universeLayerSet.Universes.Count == 0)
+        {
+            result.Errors.Add(new ValidationIssue(ValidationErrorCode.InvalidUniverseLayer, "At least one universe must be declared for relational artifacts.", artifact.Layout.UniverseLayerPath));
+            return;
+        }
+
+        var seenIds = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var universe in universeLayerSet.Universes)
+        {
+            if (string.IsNullOrWhiteSpace(universe.UniverseId) || !seenIds.Add(universe.UniverseId))
+            {
+                result.Errors.Add(new ValidationIssue(ValidationErrorCode.InvalidUniverseLayer, "Universe ids must be present and unique.", artifact.Layout.UniverseLayerPath));
+            }
+
+            if (string.IsNullOrWhiteSpace(universe.Modality) || string.IsNullOrWhiteSpace(universe.ProjectionRole))
+            {
+                result.Errors.Add(new ValidationIssue(ValidationErrorCode.InvalidUniverseLayer, $"Universe '{universe.UniverseId}' is missing modality or projection role.", artifact.Layout.UniverseLayerPath));
+            }
+
+            if (string.IsNullOrWhiteSpace(universe.CoordinateFrame.XAxis)
+                || string.IsNullOrWhiteSpace(universe.CoordinateFrame.YAxis)
+                || string.IsNullOrWhiteSpace(universe.CoordinateFrame.ZAxis))
+            {
+                result.Errors.Add(new ValidationIssue(ValidationErrorCode.InvalidUniverseLayer, $"Universe '{universe.UniverseId}' must declare x, y, and z axes.", artifact.Layout.UniverseLayerPath));
+            }
+        }
+    }
+
+    private static void ValidateGluingManifest(LoadedHopngArtifact artifact, UniverseLayerSet universeLayerSet, ValidationResult result)
+    {
+        if (artifact.GluingManifest is null)
+        {
+            if (artifact.Manifest.Sidecars.Any(sidecar => string.Equals(sidecar.Role, "gluing-manifest", StringComparison.Ordinal)))
+            {
+                result.Errors.Add(new ValidationIssue(ValidationErrorCode.MissingSidecar, "Referenced gluing manifest could not be loaded.", artifact.Layout.GluingManifestPath));
+            }
+
+            return;
+        }
+
+        if (artifact.GluingManifest.Relations.Count == 0)
+        {
+            result.Errors.Add(new ValidationIssue(ValidationErrorCode.InvalidGluingManifest, "Gluing manifest must declare at least one relation.", artifact.Layout.GluingManifestPath));
+            return;
+        }
+
+        var universeIds = universeLayerSet.Universes.Select(universe => universe.UniverseId).ToHashSet(StringComparer.Ordinal);
+        var relationIds = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var relation in artifact.GluingManifest.Relations)
+        {
+            if (string.IsNullOrWhiteSpace(relation.RelationId) || !relationIds.Add(relation.RelationId))
+            {
+                result.Errors.Add(new ValidationIssue(ValidationErrorCode.InvalidGluingManifest, "Gluing relation ids must be present and unique.", artifact.Layout.GluingManifestPath));
+            }
+
+            if (!universeIds.Contains(relation.SourceUniverseId) || !universeIds.Contains(relation.TargetUniverseId))
+            {
+                result.Errors.Add(new ValidationIssue(ValidationErrorCode.InvalidGluingManifest, $"Gluing relation '{relation.RelationId}' references an unknown universe.", artifact.Layout.GluingManifestPath));
+            }
+
+            if (string.IsNullOrWhiteSpace(relation.RelationType))
+            {
+                result.Errors.Add(new ValidationIssue(ValidationErrorCode.InvalidGluingManifest, $"Gluing relation '{relation.RelationId}' must declare a relation type.", artifact.Layout.GluingManifestPath));
+            }
+        }
+    }
+
+    private static void ValidateProjectionRules(LoadedHopngArtifact artifact, UniverseLayerSet universeLayerSet, ValidationResult result)
+    {
+        if (artifact.ProjectionRules is null)
+        {
+            if (artifact.Manifest.Sidecars.Any(sidecar => string.Equals(sidecar.Role, "projection-rules", StringComparison.Ordinal)))
+            {
+                result.Errors.Add(new ValidationIssue(ValidationErrorCode.MissingSidecar, "Referenced projection rules could not be loaded.", artifact.Layout.ProjectionRulesPath));
+            }
+
+            return;
+        }
+
+        if (artifact.ProjectionRules.Rules.Count == 0)
+        {
+            result.Errors.Add(new ValidationIssue(ValidationErrorCode.InvalidProjectionRules, "Projection rules must declare at least one rule.", artifact.Layout.ProjectionRulesPath));
+            return;
+        }
+
+        var universeIds = universeLayerSet.Universes.Select(universe => universe.UniverseId).ToHashSet(StringComparer.Ordinal);
+        var projectionRoles = artifact.LayerMap.Layers.Select(layer => layer.ProjectionRole).ToHashSet(StringComparer.Ordinal);
+        var ruleIds = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var rule in artifact.ProjectionRules.Rules)
+        {
+            if (string.IsNullOrWhiteSpace(rule.RuleId) || !ruleIds.Add(rule.RuleId))
+            {
+                result.Errors.Add(new ValidationIssue(ValidationErrorCode.InvalidProjectionRules, "Projection rule ids must be present and unique.", artifact.Layout.ProjectionRulesPath));
+            }
+
+            if (!universeIds.Contains(rule.SourceUniverseId))
+            {
+                result.Errors.Add(new ValidationIssue(ValidationErrorCode.InvalidProjectionRules, $"Projection rule '{rule.RuleId}' references an unknown universe.", artifact.Layout.ProjectionRulesPath));
+            }
+
+            if (!projectionRoles.Contains(rule.TargetProjectionRole))
+            {
+                result.Errors.Add(new ValidationIssue(ValidationErrorCode.InvalidProjectionRules, $"Projection rule '{rule.RuleId}' targets an unknown projection role.", artifact.Layout.ProjectionRulesPath));
+            }
+
+            if (string.IsNullOrWhiteSpace(rule.MappingType))
+            {
+                result.Errors.Add(new ValidationIssue(ValidationErrorCode.InvalidProjectionRules, $"Projection rule '{rule.RuleId}' must declare a mapping type.", artifact.Layout.ProjectionRulesPath));
+            }
+        }
+    }
+
+    private static void ValidateLegibilityProfile(LoadedHopngArtifact artifact, UniverseLayerSet universeLayerSet, ValidationResult result)
+    {
+        if (artifact.LegibilityProfile is null)
+        {
+            if (artifact.Manifest.Sidecars.Any(sidecar => string.Equals(sidecar.Role, "legibility-profile", StringComparison.Ordinal)))
+            {
+                result.Errors.Add(new ValidationIssue(ValidationErrorCode.MissingSidecar, "Referenced legibility profile could not be loaded.", artifact.Layout.LegibilityProfilePath));
+            }
+
+            return;
+        }
+
+        var universeIds = universeLayerSet.Universes.Select(universe => universe.UniverseId).ToHashSet(StringComparer.Ordinal);
+        var relationIds = (artifact.GluingManifest?.Relations ?? []).Select(relation => relation.RelationId).ToHashSet(StringComparer.Ordinal);
+        var projectedUniverseIds = (artifact.ProjectionRules?.Rules ?? []).Select(rule => rule.SourceUniverseId).ToHashSet(StringComparer.Ordinal);
+
+        foreach (var requiredUniverse in artifact.LegibilityProfile.RequiredUniverses)
+        {
+            if (!universeIds.Contains(requiredUniverse))
+            {
+                result.Errors.Add(new ValidationIssue(ValidationErrorCode.InvalidLegibilityProfile, $"Legibility profile requires unknown universe '{requiredUniverse}'.", artifact.Layout.LegibilityProfilePath));
+            }
+        }
+
+        foreach (var requiredRelation in artifact.LegibilityProfile.RequiredRelations)
+        {
+            if (!relationIds.Contains(requiredRelation))
+            {
+                result.Errors.Add(new ValidationIssue(ValidationErrorCode.InvalidLegibilityProfile, $"Legibility profile requires unknown relation '{requiredRelation}'.", artifact.Layout.LegibilityProfilePath));
+            }
+        }
+
+        if (artifact.LegibilityProfile.ProjectionIntegrityRequired)
+        {
+            foreach (var requiredUniverse in artifact.LegibilityProfile.RequiredUniverses)
+            {
+                if (!projectedUniverseIds.Contains(requiredUniverse))
+                {
+                    result.Errors.Add(new ValidationIssue(ValidationErrorCode.InvalidLegibilityProfile, $"Legibility profile requires projection integrity for universe '{requiredUniverse}'.", artifact.Layout.LegibilityProfilePath));
+                }
             }
         }
     }

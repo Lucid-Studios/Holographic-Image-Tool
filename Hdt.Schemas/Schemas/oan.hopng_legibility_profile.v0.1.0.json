@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "oan.hopng_legibility_profile.v0.1.0.json",
+  "title": "HOPNG Legibility Profile",
+  "type": "object",
+  "required": [
+    "schema",
+    "schemaVersion",
+    "artifactId",
+    "requiredUniverses",
+    "requiredRelations",
+    "projectionIntegrityRequired"
+  ],
+  "properties": {
+    "schema": { "const": "oan.hopng_legibility_profile" },
+    "schemaVersion": { "const": "0.1.0" },
+    "artifactId": { "type": "string" },
+    "requiredUniverses": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "requiredRelations": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "projectionIntegrityRequired": { "type": "boolean" }
+  }
+}

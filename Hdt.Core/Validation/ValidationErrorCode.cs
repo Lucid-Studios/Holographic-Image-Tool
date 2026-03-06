@@ -11,5 +11,9 @@ public enum ValidationErrorCode
     InvalidLayerMap = 16,
     InvalidVisibilityPolicy = 17,
     UnsupportedSchema = 18,
-    InvalidJson = 19
+    InvalidJson = 19,
+    InvalidUniverseLayer = 20,
+    InvalidGluingManifest = 21,
+    InvalidProjectionRules = 22,
+    InvalidLegibilityProfile = 23
 }

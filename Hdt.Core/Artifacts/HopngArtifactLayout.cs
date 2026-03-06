@@ -11,6 +11,10 @@ public sealed record HopngArtifactLayout
     public string TrustEnvelopePath => Path.Combine(DirectoryPath, $"{BaseName}.trust-envelope.json");
     public string TransformHistoryPath => Path.Combine(DirectoryPath, $"{BaseName}.transform-history.json");
     public string DepthFieldPath => Path.Combine(DirectoryPath, $"{BaseName}.depth-field.json");
+    public string UniverseLayerPath => Path.Combine(DirectoryPath, $"{BaseName}.universe-layer.json");
+    public string GluingManifestPath => Path.Combine(DirectoryPath, $"{BaseName}.gluing-manifest.json");
+    public string ProjectionRulesPath => Path.Combine(DirectoryPath, $"{BaseName}.projection-rules.json");
+    public string LegibilityProfilePath => Path.Combine(DirectoryPath, $"{BaseName}.legibility-profile.json");
     public string HashPath => Path.Combine(DirectoryPath, $"{BaseName}.hash.json");
     public string SignaturePath => Path.Combine(DirectoryPath, $"{BaseName}.signature.json");
     public string PrivateKeyPath => Path.Combine(DirectoryPath, $"{BaseName}.ed25519.private.key");

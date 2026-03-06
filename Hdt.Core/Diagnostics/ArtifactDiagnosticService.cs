@@ -15,6 +15,10 @@ public sealed class ArtifactDiagnosticService
         var flattenedProjectionRisk = validationResult.Errors.Any(error =>
             error.Code is ValidationErrorCode.MissingSidecar
                 or ValidationErrorCode.InvalidLayerMap
+                or ValidationErrorCode.InvalidUniverseLayer
+                or ValidationErrorCode.InvalidGluingManifest
+                or ValidationErrorCode.InvalidProjectionRules
+                or ValidationErrorCode.InvalidLegibilityProfile
                 or ValidationErrorCode.InvalidVisibilityPolicy);
 
         if (counterfeitRisk)
@@ -24,7 +28,7 @@ public sealed class ArtifactDiagnosticService
 
         if (flattenedProjectionRisk)
         {
-            signals.Add("Projection surface has lost required governed sidecars or lawful structure.");
+            signals.Add("Projection surface has lost required governed sidecars or lawful relational structure.");
         }
 
         if (!signals.Any())

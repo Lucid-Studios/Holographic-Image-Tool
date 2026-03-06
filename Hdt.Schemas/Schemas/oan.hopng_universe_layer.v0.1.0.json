@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "oan.hopng_universe_layer.v0.1.0.json",
+  "title": "HOPNG Universe Layer",
+  "type": "object",
+  "required": ["schema", "schemaVersion", "artifactId", "universes"],
+  "properties": {
+    "schema": { "const": "oan.hopng_universe_layer" },
+    "schemaVersion": { "const": "0.1.0" },
+    "artifactId": { "type": "string" },
+    "universes": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/universe" }
+    }
+  },
+  "$defs": {
+    "universe": {
+      "type": "object",
+      "required": [
+        "universeId",
+        "modality",
+        "neutralPlane",
+        "coordinateFrame",
+        "projectionRole"
+      ],
+      "properties": {
+        "universeId": { "type": "string" },
+        "modality": { "type": "string" },
+        "neutralPlane": { "type": "number" },
+        "projectionRole": { "type": "string" },
+        "coordinateFrame": {
+          "type": "object",
+          "required": ["xAxis", "yAxis", "zAxis", "units"],
+          "properties": {
+            "xAxis": { "type": "string" },
+            "yAxis": { "type": "string" },
+            "zAxis": { "type": "string" },
+            "units": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

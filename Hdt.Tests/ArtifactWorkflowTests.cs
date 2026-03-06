@@ -1,4 +1,5 @@
 using FluentAssertions;
+using System.Text.Json;
 using Hdt.Core.Security;
 using Hdt.Core.Services;
 using Hdt.Core.Validation;
@@ -142,5 +143,102 @@ public sealed class ArtifactWorkflowTests
         var validation = new HopngArtifactValidator().Validate(artifact.Layout.ManifestPath);
 
         validation.IsValid.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Valid_Phase2_Artifact_Passes_Validation()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var artifact = Phase2ArtifactFactory.CreateValid(tempDir, "phase2-valid");
+
+        var validation = new HopngArtifactValidator().Validate(artifact.Layout.ManifestPath);
+
+        validation.IsValid.Should().BeTrue();
+        artifact.UniverseLayerSet.Should().NotBeNull();
+        artifact.GluingManifest.Should().NotBeNull();
+        artifact.ProjectionRules.Should().NotBeNull();
+        artifact.LegibilityProfile.Should().NotBeNull();
+    }
+
+    [Fact]
+    public void Phase2_Validation_Fails_When_Gluing_References_Unknown_Universe()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var artifact = Phase2ArtifactFactory.CreateValid(tempDir, "phase2-bad-glue");
+        JsonFile.Mutate(artifact.Layout.GluingManifestPath, json =>
+        {
+            json["relations"]!.AsArray()[0]!["targetUniverseId"] = "missing-universe";
+        });
+
+        var validation = new HopngArtifactValidator().Validate(artifact.Layout.ManifestPath);
+
+        validation.IsValid.Should().BeFalse();
+        validation.Errors.Should().Contain(issue => issue.Code == ValidationErrorCode.InvalidGluingManifest);
+    }
+
+    [Fact]
+    public void Phase2_Validation_Fails_When_Projection_Target_Is_Unknown()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var artifact = Phase2ArtifactFactory.CreateValid(tempDir, "phase2-bad-rule");
+        JsonFile.Mutate(artifact.Layout.ProjectionRulesPath, json =>
+        {
+            json["rules"]!.AsArray()[0]!["targetProjectionRole"] = "missing-role";
+        });
+
+        var validation = new HopngArtifactValidator().Validate(artifact.Layout.ManifestPath);
+
+        validation.IsValid.Should().BeFalse();
+        validation.Errors.Should().Contain(issue => issue.Code == ValidationErrorCode.InvalidProjectionRules);
+    }
+
+    [Fact]
+    public void Phase2_Validation_Fails_When_Legibility_Profile_Requires_Unknown_Universe()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var artifact = Phase2ArtifactFactory.CreateValid(tempDir, "phase2-bad-legibility");
+        JsonFile.Mutate(artifact.Layout.LegibilityProfilePath, json =>
+        {
+            json["requiredUniverses"]!.AsArray()[0] = "missing-universe";
+        });
+
+        var validation = new HopngArtifactValidator().Validate(artifact.Layout.ManifestPath);
+
+        validation.IsValid.Should().BeFalse();
+        validation.Errors.Should().Contain(issue => issue.Code == ValidationErrorCode.InvalidLegibilityProfile);
+    }
+
+    [Fact]
+    public void Phase2_Diagnostics_Mark_Relationally_Incomplete_Artifacts_As_Flattened_Risk()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var artifact = Phase2ArtifactFactory.CreateValid(tempDir, "phase2-diagnostics");
+        JsonFile.Mutate(artifact.Layout.GluingManifestPath, json =>
+        {
+            json["relations"]!.AsArray()[0]!["targetUniverseId"] = "missing-universe";
+        });
+
+        var validator = new HopngArtifactValidator();
+        var validation = validator.Validate(artifact.Layout.ManifestPath);
+        var inspectedArtifact = new HopngArtifactLoader().Load(artifact.Layout.ManifestPath);
+        var diagnostics = new Hdt.Core.Diagnostics.ArtifactDiagnosticService().Analyze(inspectedArtifact, validation);
+
+        validation.IsValid.Should().BeFalse();
+        diagnostics.FlattenedProjectionRisk.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Privileged_Inspection_Exposes_Phase2_Relational_Structures()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var artifact = Phase2ArtifactFactory.CreateValid(tempDir, "phase2-inspection");
+        var validation = new HopngArtifactValidator().Validate(artifact.Layout.ManifestPath);
+        var view = new HopngArtifactInspector().BuildPrivilegedView(artifact, validation);
+        var json = JsonSerializer.Serialize(view);
+
+        json.Should().Contain("universeLayerSet");
+        json.Should().Contain("gluingManifest");
+        json.Should().Contain("projectionRules");
+        json.Should().Contain("legibilityProfile");
     }
 }

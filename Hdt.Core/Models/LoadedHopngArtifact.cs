@@ -12,4 +12,8 @@ public sealed record LoadedHopngArtifact
     public required DepthField DepthField { get; init; }
     public required HashSidecar HashSidecar { get; init; }
     public required SignatureSidecar SignatureSidecar { get; init; }
+    public UniverseLayerSet? UniverseLayerSet { get; init; }
+    public GluingManifest? GluingManifest { get; init; }
+    public ProjectionRules? ProjectionRules { get; init; }
+    public LegibilityProfile? LegibilityProfile { get; init; }
 }
