@@ -60,3 +60,5 @@ See [docs/ARTIFACT_MODEL.md](/D:/Holographic%20Data%20Tool/docs/ARTIFACT_MODEL.m
 For the semantic progression of the system from trusted artifact to Sanctuary/OE runtime participant, see [docs/PHASE_ROADMAP.md](/D:/Holographic%20Data%20Tool/docs/PHASE_ROADMAP.md).
 
 For the first concrete execution slice of lawful relationality, see [docs/PHASE_2_MILESTONE_1.md](/D:/Holographic%20Data%20Tool/docs/PHASE_2_MILESTONE_1.md).
+
+For the next Phase 2 execution slice focused on governed projection derivation and merge behavior, see [docs/PHASE_2_MILESTONE_2.md](/D:/Holographic%20Data%20Tool/docs/PHASE_2_MILESTONE_2.md).

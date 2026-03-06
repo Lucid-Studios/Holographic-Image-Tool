@@ -51,6 +51,10 @@ Move from isolated trusted artifacts to governed relation between coordinate-bou
 
 See [`PHASE_2_MILESTONE_1.md`](./PHASE_2_MILESTONE_1.md).
 
+### Planned Second Slice
+
+See [`PHASE_2_MILESTONE_2.md`](./PHASE_2_MILESTONE_2.md).
+
 ## Phase 3: Event and Tensor Temporality
 
 ### Status
