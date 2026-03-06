@@ -56,3 +56,7 @@ A v1 artifact is a loose-sidecar set stored in one directory:
 - `<name>.ed25519.public.key`
 
 See [docs/ARTIFACT_MODEL.md](/D:/Holographic%20Data%20Tool/docs/ARTIFACT_MODEL.md) for the Phase 1 contract and [docs/PHASE_BACKLOG.md](/D:/Holographic%20Data%20Tool/docs/PHASE_BACKLOG.md) for the staged roadmap.
+
+For the semantic progression of the system from trusted artifact to Sanctuary/OE runtime participant, see [docs/PHASE_ROADMAP.md](/D:/Holographic%20Data%20Tool/docs/PHASE_ROADMAP.md).
+
+For the first concrete execution slice of lawful relationality, see [docs/PHASE_2_MILESTONE_1.md](/D:/Holographic%20Data%20Tool/docs/PHASE_2_MILESTONE_1.md).
