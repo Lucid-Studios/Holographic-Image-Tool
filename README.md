@@ -81,3 +81,5 @@ For the operator-facing hardening criteria for the current release target, see [
 For the first temporal implementation slice, see [docs/PHASE_3_MILESTONE_1.md](/D:/Holographic%20Data%20Tool/docs/PHASE_3_MILESTONE_1.md).
 
 For the remaining Phase 3 execution track, see [docs/PHASE_3_MILESTONE_2.md](/D:/Holographic%20Data%20Tool/docs/PHASE_3_MILESTONE_2.md), [docs/PHASE_3_MILESTONE_3.md](/D:/Holographic%20Data%20Tool/docs/PHASE_3_MILESTONE_3.md), and [docs/PHASE_3_RELEASE_READY.md](/D:/Holographic%20Data%20Tool/docs/PHASE_3_RELEASE_READY.md).
+
+For typed evidentiary artifact classes and layer-carrier guidance, see [docs/CAPTURE_PROFILES.md](/D:/Holographic%20Data%20Tool/docs/CAPTURE_PROFILES.md).
