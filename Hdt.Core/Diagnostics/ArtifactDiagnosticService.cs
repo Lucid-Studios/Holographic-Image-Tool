@@ -12,6 +12,10 @@ public sealed class ArtifactDiagnosticService
     {
         var signals = new List<string>();
         var derivation = _projectionDerivationService.Derive(artifact, validationResult);
+        var hasRelationalArtifacts = artifact.UniverseLayerSet is not null
+            || artifact.GluingManifest is not null
+            || artifact.ProjectionRules is not null
+            || artifact.LegibilityProfile is not null;
         var counterfeitRisk = validationResult.Errors.Any(error =>
             error.Code is ValidationErrorCode.SignatureMismatch
                 or ValidationErrorCode.HashMismatch
@@ -24,7 +28,8 @@ public sealed class ArtifactDiagnosticService
                 or ValidationErrorCode.InvalidProjectionRules
                 or ValidationErrorCode.InvalidLegibilityProfile
                 or ValidationErrorCode.InvalidVisibilityPolicy)
-            || derivation.Status is ProjectionFormationStatus.StructurallyIncomplete or ProjectionFormationStatus.FlattenedOrUnsupported;
+            || derivation.Status == ProjectionFormationStatus.StructurallyIncomplete
+            || (hasRelationalArtifacts && derivation.Status == ProjectionFormationStatus.FlattenedOrUnsupported);
 
         if (counterfeitRisk)
         {
@@ -39,9 +44,13 @@ public sealed class ArtifactDiagnosticService
         {
             signals.Add("Projection surface declares relational structure but does not satisfy lawful derivation requirements.");
         }
-        else
+        else if (hasRelationalArtifacts)
         {
             signals.Add("Projection surface lacks governed Phase 2 derivation support.");
+        }
+        else
+        {
+            signals.Add("Artifact is Phase 1 only; Phase 2 governed derivation is not declared.");
         }
 
         if (flattenedProjectionRisk)

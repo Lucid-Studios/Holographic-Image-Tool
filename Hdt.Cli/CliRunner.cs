@@ -21,10 +21,10 @@ public sealed class CliRunner
 
     public int Execute(string[] args)
     {
-        if (args.Length == 0)
+        if (args.Length == 0 || args[0] is "help" or "--help" or "-h")
         {
             WriteUsage();
-            return 1;
+            return 0;
         }
 
         var command = args[0].ToLowerInvariant();
@@ -171,6 +171,11 @@ public sealed class CliRunner
         _writer.WriteLine("  merge-layers --path <manifest-or-png> [--json]");
         _writer.WriteLine("  compare-surfaces --left <manifest-or-png> --right <manifest-or-png> [--json]");
         _writer.WriteLine("  render-phase-stack | invoke-formation | bind-oe");
+        _writer.WriteLine("Exit codes:");
+        _writer.WriteLine("  0  lawful success");
+        _writer.WriteLine("  24 structurally incomplete derivation or comparison");
+        _writer.WriteLine("  25 flattened or unsupported derivation or comparison");
+        _writer.WriteLine("  10-23 validation failures returned from the core validator");
     }
 
     private void Write(object value, bool asJson)

@@ -1,0 +1,31 @@
+name: Build and Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-test:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Build solution
+        run: dotnet build HolographicDataTool.sln --configuration Release
+
+      - name: Run tests
+        run: dotnet test Hdt.Tests/Hdt.Tests.csproj --configuration Release --no-build
+
+      - name: Run Phase 2 smoke path
+        shell: pwsh
+        run: ./scripts/Invoke-Phase2ReleaseSmoke.ps1

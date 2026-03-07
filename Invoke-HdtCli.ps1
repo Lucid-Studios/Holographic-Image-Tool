@@ -1,3 +1,10 @@
+<#
+.SYNOPSIS
+Runs the HDT CLI through the local .NET project.
+
+.DESCRIPTION
+This wrapper keeps PowerShell as the operator surface while delegating command execution to `Hdt.Cli`.
+#>
 param(
     [Parameter(Mandatory = $true)]
     [string]$Command,

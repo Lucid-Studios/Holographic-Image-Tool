@@ -1,5 +1,13 @@
 # Example Artifacts
 
-Use `phase1-sample.*` as the reference Phase 1 artifact set. It was generated from the current CLI after the signing path fix and validates cleanly.
+`phase1-sample.*` is the clean reference Phase 1 artifact set.
 
-`hello-hopng.*` and `manual.*` were generated during local verification and are ignored by `.gitignore` where appropriate.
+`phase2-sample.*` is the clean reference Phase 2 artifact set used for merge and comparison verification.
+
+Committed example artifacts are verification-safe:
+
+- they validate cleanly
+- they keep public verification material
+- they do not keep reusable private signing keys
+
+Any other example or scratch artifacts should be generated locally and not kept committed as reference material.

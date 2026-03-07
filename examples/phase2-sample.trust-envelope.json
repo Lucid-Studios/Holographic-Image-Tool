@@ -1,0 +1,1 @@
+{"artifactId":"a79dc016-dfdf-419b-8ddb-5aa7bf1f2933","issuedUtc":"2026-03-07T00:48:04.6541345\u002B00:00","keyId":"key-1","publicKey":"QQbaBdbK1tL3SRsEArlTtuFOUH46SncPm8MRoEV1SSw=","schema":"oan.hopng_trust_envelope","schemaVersion":"0.1.0","signatureFile":"phase2-sample.signature.json","signer":"tester","signingScope":["phase2-sample.hopng.json","phase2-sample.hash.json"]}

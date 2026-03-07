@@ -30,7 +30,7 @@ Implemented.
 
 ### Status
 
-Next implementation phase.
+Implemented, entering release hardening.
 
 ### Goal
 
@@ -54,6 +54,18 @@ See [`PHASE_2_MILESTONE_1.md`](./PHASE_2_MILESTONE_1.md).
 ### Planned Second Slice
 
 See [`PHASE_2_MILESTONE_2.md`](./PHASE_2_MILESTONE_2.md).
+
+### Current Hardening Work
+
+- reconcile docs and operator guidance with the now-live `merge-layers` and `compare-surfaces` commands
+- keep only clean Phase 1 and Phase 2 reference artifact sets under `examples/`
+- remove committed private signing keys from reference artifacts
+- add repo-local build and test automation
+- add one internal smoke path that proves create, validate, inspect, merge, and compare behavior through the public PowerShell surface
+
+### Release Gate
+
+See [`PHASE_2_RELEASE_READY.md`](./PHASE_2_RELEASE_READY.md).
 
 ## Phase 3: Event and Tensor Temporality
 

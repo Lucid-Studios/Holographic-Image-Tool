@@ -147,6 +147,18 @@ public sealed class ArtifactWorkflowTests
     }
 
     [Fact]
+    public void Phase1_Artifacts_Are_Not_Marked_As_Flattening_Risk_During_Inspection()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var artifact = new HopngArtifactBuilder().Create(new NewHopngRequest(tempDir, "phase1-inspection", "tester", "key-1"));
+        var validation = new HopngArtifactValidator().Validate(artifact.Layout.ManifestPath);
+        var diagnostics = new Hdt.Core.Diagnostics.ArtifactDiagnosticService().Analyze(artifact, validation);
+
+        diagnostics.FlattenedProjectionRisk.Should().BeFalse();
+        diagnostics.Signals.Should().Contain(signal => signal.Contains("Phase 1 only", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void Valid_Phase2_Artifact_Passes_Validation()
     {
         var tempDir = TestPaths.CreateTempDirectory();
