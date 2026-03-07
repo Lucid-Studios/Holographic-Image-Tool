@@ -32,17 +32,17 @@ Later-phase commands remain reserved:
 
 ## Governance
 
-Lucid Technologies repository standards for AI governance, citizen science, data handling, and GitHub workflow are recorded in [docs/LUCID_TECHNOLOGIES_STANDARDS.md](/D:/Holographic%20Data%20Tool/docs/LUCID_TECHNOLOGIES_STANDARDS.md).
+Lucid Technologies repository standards for AI governance, citizen science, data handling, and GitHub workflow are recorded in [docs/LUCID_TECHNOLOGIES_STANDARDS.md](docs/LUCID_TECHNOLOGIES_STANDARDS.md).
 
 Community and contribution guidance lives in:
 
-- [.github/CONTRIBUTING.md](/D:/Holographic%20Data%20Tool/.github/CONTRIBUTING.md)
-- [.github/SECURITY.md](/D:/Holographic%20Data%20Tool/.github/SECURITY.md)
-- [.github/CODE_OF_CONDUCT.md](/D:/Holographic%20Data%20Tool/.github/CODE_OF_CONDUCT.md)
-- [docs/LICENSING_POLICY.md](/D:/Holographic%20Data%20Tool/docs/LICENSING_POLICY.md)
-- [docs/DCO_CLA_POLICY.md](/D:/Holographic%20Data%20Tool/docs/DCO_CLA_POLICY.md)
-- [docs/AI_USAGE_DISCLOSURE.md](/D:/Holographic%20Data%20Tool/docs/AI_USAGE_DISCLOSURE.md)
-- [docs/DATA_CLASSIFICATION.md](/D:/Holographic%20Data%20Tool/docs/DATA_CLASSIFICATION.md)
+- [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md)
+- [.github/SECURITY.md](.github/SECURITY.md)
+- [.github/CODE_OF_CONDUCT.md](.github/CODE_OF_CONDUCT.md)
+- [docs/LICENSING_POLICY.md](docs/LICENSING_POLICY.md)
+- [docs/DCO_CLA_POLICY.md](docs/DCO_CLA_POLICY.md)
+- [docs/AI_USAGE_DISCLOSURE.md](docs/AI_USAGE_DISCLOSURE.md)
+- [docs/DATA_CLASSIFICATION.md](docs/DATA_CLASSIFICATION.md)
 
 ## Artifact Layout
 
@@ -68,18 +68,18 @@ A v1 artifact is a loose-sidecar set stored in one directory:
 
 Committed reference artifacts omit private signing keys. Signing-key generation is a local operator action.
 
-See [docs/ARTIFACT_MODEL.md](/D:/Holographic%20Data%20Tool/docs/ARTIFACT_MODEL.md) for the artifact contract and [docs/PHASE_BACKLOG.md](/D:/Holographic%20Data%20Tool/docs/PHASE_BACKLOG.md) for the staged roadmap.
+See [docs/ARTIFACT_MODEL.md](docs/ARTIFACT_MODEL.md) for the artifact contract and [docs/PHASE_BACKLOG.md](docs/PHASE_BACKLOG.md) for the staged roadmap.
 
-For the semantic progression of the system from trusted artifact to Sanctuary/OE runtime participant, see [docs/PHASE_ROADMAP.md](/D:/Holographic%20Data%20Tool/docs/PHASE_ROADMAP.md).
+For the semantic progression of the system from trusted artifact to Sanctuary/OE runtime participant, see [docs/PHASE_ROADMAP.md](docs/PHASE_ROADMAP.md).
 
-For the first concrete execution slice of lawful relationality, see [docs/PHASE_2_MILESTONE_1.md](/D:/Holographic%20Data%20Tool/docs/PHASE_2_MILESTONE_1.md).
+For the first concrete execution slice of lawful relationality, see [docs/PHASE_2_MILESTONE_1.md](docs/PHASE_2_MILESTONE_1.md).
 
-For the next Phase 2 execution slice focused on governed projection derivation and merge behavior, see [docs/PHASE_2_MILESTONE_2.md](/D:/Holographic%20Data%20Tool/docs/PHASE_2_MILESTONE_2.md).
+For the next Phase 2 execution slice focused on governed projection derivation and merge behavior, see [docs/PHASE_2_MILESTONE_2.md](docs/PHASE_2_MILESTONE_2.md).
 
-For the operator-facing hardening criteria for the current release target, see [docs/PHASE_2_RELEASE_READY.md](/D:/Holographic%20Data%20Tool/docs/PHASE_2_RELEASE_READY.md).
+For the operator-facing hardening criteria for the current release target, see [docs/PHASE_2_RELEASE_READY.md](docs/PHASE_2_RELEASE_READY.md).
 
-For the first temporal implementation slice, see [docs/PHASE_3_MILESTONE_1.md](/D:/Holographic%20Data%20Tool/docs/PHASE_3_MILESTONE_1.md).
+For the first temporal implementation slice, see [docs/PHASE_3_MILESTONE_1.md](docs/PHASE_3_MILESTONE_1.md).
 
-For the remaining Phase 3 execution track, see [docs/PHASE_3_MILESTONE_2.md](/D:/Holographic%20Data%20Tool/docs/PHASE_3_MILESTONE_2.md), [docs/PHASE_3_MILESTONE_3.md](/D:/Holographic%20Data%20Tool/docs/PHASE_3_MILESTONE_3.md), and [docs/PHASE_3_RELEASE_READY.md](/D:/Holographic%20Data%20Tool/docs/PHASE_3_RELEASE_READY.md).
+For the remaining Phase 3 execution track, see [docs/PHASE_3_MILESTONE_2.md](docs/PHASE_3_MILESTONE_2.md), [docs/PHASE_3_MILESTONE_3.md](docs/PHASE_3_MILESTONE_3.md), and [docs/PHASE_3_RELEASE_READY.md](docs/PHASE_3_RELEASE_READY.md).
 
-For typed evidentiary artifact classes and layer-carrier guidance, see [docs/CAPTURE_PROFILES.md](/D:/Holographic%20Data%20Tool/docs/CAPTURE_PROFILES.md).
+For typed evidentiary artifact classes and layer-carrier guidance, see [docs/CAPTURE_PROFILES.md](docs/CAPTURE_PROFILES.md).

@@ -108,7 +108,7 @@ Before merging a standards-sensitive change, reviewers should ask:
 - [U.S. AI Safety Institute guidance updates at NIST](https://www.nist.gov/news-events/news/2025/01/updated-guidelines-managing-misuse-risk-dual-use-foundation-models)
 - [CitizenScience.gov About](https://www.citizenscience.gov/about/)
 - [Federal Crowdsourcing and Citizen Science Toolkit](https://www.citizenscience.gov/about/toolkit/)
-- [Crowdsourcing and Citizen Science Act of 2016](https://www.congress.gov/bill/114th-congress/house-bill/6414/text)
+- [Crowdsourcing and Citizen Science Act of 2016](https://www.govinfo.gov/app/details/BILLS-114hr6414ih)
 - [Federal Data Strategy Practices](https://strategy.data.gov/practices/)
 - [Data.gov Open Government](https://data.gov/open-gov/index.html)
 - [Resources.Data.gov Principles](https://resources.data.gov/PoD/principles/)
