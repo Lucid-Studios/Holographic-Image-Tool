@@ -116,6 +116,12 @@ Artifacts can preserve evented change across governed slices.
 - two surfaces can be compared for topology similarity, force distribution, or drift
 - temporal semantics remain governed by explicit policy rather than hidden convention
 
+Phase 3 should complete in three execution slices:
+
+- Milestone 1: single-artifact temporal semantics
+- Milestone 2: temporal state maturity
+- Milestone 3: cross-artifact temporal comparison
+
 ### Not Yet
 
 - perspectival or participatory engram identity forms
@@ -248,5 +254,6 @@ Artifacts become runtime-governed participants in Sanctuary and OE life.
 - Phase 1 is implemented
 - Phase 2 is implemented as the lawful relational operator layer
 - Phase 3 Milestone 1 is implemented as the first single-artifact temporal layer
+- Phase 3 Milestones 2 and 3 are planned, followed by a Phase 3 release-ready hardening gate
 - Phases 4 through 6 remain defined here as the governing semantic roadmap
 - [`PHASE_BACKLOG.md`](./PHASE_BACKLOG.md) remains the shorter execution-oriented companion document

@@ -82,8 +82,10 @@ Preserve evented change and tensor-native deltas rather than static lawful struc
 - harden the Phase 3 Milestone 1 operator surface and reference artifacts
 - add broader temporal examples once a public-safe Phase 3 example set is selected
 - extend drift and topology diagnostics into richer temporal comparison after single-artifact semantics stabilize
-- decide whether derived `force` becomes a Phase 3 Milestone 2 channel or remains deferred
-- add duration-window and timestamp-span policies only after fixed-cadence raw-slice semantics are proven stable
+- implement duration-window and timestamp-span temporal policy support
+- implement derived `force` semantics and temporal state classification
+- implement governed cross-artifact temporal comparison after single-artifact semantics stabilize
+- harden the full Phase 3 operator surface for release readiness
 
 ### Implemented Milestone 1
 
@@ -110,6 +112,18 @@ Preserve evented change and tensor-native deltas rather than static lawful struc
 ### Milestone Definition
 
 See [`PHASE_3_MILESTONE_1.md`](./PHASE_3_MILESTONE_1.md).
+
+### Planned Milestone 2
+
+See [`PHASE_3_MILESTONE_2.md`](./PHASE_3_MILESTONE_2.md).
+
+### Planned Milestone 3
+
+See [`PHASE_3_MILESTONE_3.md`](./PHASE_3_MILESTONE_3.md).
+
+### Release Gate
+
+See [`PHASE_3_RELEASE_READY.md`](./PHASE_3_RELEASE_READY.md).
 
 ## Phase 4: Engrammatic Emergence
 

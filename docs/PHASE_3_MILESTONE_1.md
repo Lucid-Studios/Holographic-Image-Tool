@@ -6,12 +6,12 @@ The milestone is analytic-first and custody-safe. A `.hopng` may carry lawful te
 
 ## Temporal Notation
 
-- `Δobs`: total observed-set duration
-- `δ`: base raw slice cadence
+- `DeltaObs`: total observed-set duration
+- `delta`: base raw slice cadence
 - `N`: total raw slice count in the observed set
 - `n`: ordinal index within the stored slice family
 - `h`: delta horizon in raw-slice units
-- `hΔ = h × δ`
+- `hDelta = h x delta`
 
 ## Implemented Sidecars
 
