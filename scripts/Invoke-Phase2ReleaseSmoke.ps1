@@ -58,3 +58,5 @@ finally {
         Remove-Item -Path $tempDir -Recurse -Force
     }
 }
+
+exit 0
