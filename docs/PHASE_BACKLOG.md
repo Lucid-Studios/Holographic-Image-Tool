@@ -71,7 +71,7 @@ See [`PHASE_2_RELEASE_READY.md`](./PHASE_2_RELEASE_READY.md).
 
 ### Status
 
-Planned after Phase 2 structural stability.
+Milestone 1 implemented; later temporal expansion remains planned.
 
 ### Goal
 
@@ -79,13 +79,37 @@ Preserve evented change and tensor-native deltas rather than static lawful struc
 
 ### Backlog
 
-- implement `oan.hopng_event_slice.v0.1.0.json`
-- implement `oan.hopng_phase_slice.v0.1.0.json`
-- implement `oan.hopng_phase_policy.v0.1.0.json`
-- implement `oan.hopng_optical_channels.v0.1.0.json`
-- add phase stack rendering and validation
-- add drift, topology, and force-distribution comparison across slices
-- ensure optical channels remain governed data carriers rather than presentation effects
+- harden the Phase 3 Milestone 1 operator surface and reference artifacts
+- add broader temporal examples once a public-safe Phase 3 example set is selected
+- extend drift and topology diagnostics into richer temporal comparison after single-artifact semantics stabilize
+- decide whether derived `force` becomes a Phase 3 Milestone 2 channel or remains deferred
+- add duration-window and timestamp-span policies only after fixed-cadence raw-slice semantics are proven stable
+
+### Implemented Milestone 1
+
+- implemented `oan.hopng_event_slice.v0.1.0.json`
+- implemented `oan.hopng_phase_slice.v0.1.0.json`
+- implemented `oan.hopng_phase_policy.v0.1.0.json`
+- implemented `oan.hopng_optical_channels.v0.1.0.json`
+- added observed-set validation for duration, cadence, and raw-slice count
+- added grouped event-slice and derived phase-slice validation
+- added deterministic phase derivation using contiguous event windows
+- added drift and relation-graph topology diagnostics inside one artifact
+- upgraded `render-phase-stack` to a live diagnostic command
+- preserved Prime-safe metadata-only temporal inspection
+
+### Current Boundaries
+
+- single-artifact temporal semantics only
+- analytic-first and custody-safe
+- no interpolation or synthetic slices
+- no cross-artifact temporal comparison
+- no engram, formation, OE, or Sanctuary runtime behavior
+- no aesthetic image synthesis
+
+### Milestone Definition
+
+See [`PHASE_3_MILESTONE_1.md`](./PHASE_3_MILESTONE_1.md).
 
 ## Phase 4: Engrammatic Emergence
 

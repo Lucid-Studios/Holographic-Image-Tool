@@ -344,4 +344,101 @@ public sealed class ArtifactWorkflowTests
         comparison.Classification.Should().Be("formed-vs-incomplete");
         comparison.RightIssues.Should().Contain(issue => issue.Contains("cryptic-support", StringComparison.Ordinal));
     }
+
+    [Fact]
+    public void Valid_Phase3_Artifact_Passes_Validation()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var artifact = Phase3ArtifactFactory.CreateValid(tempDir, "phase3-valid");
+
+        var validation = new HopngArtifactValidator().Validate(artifact.Layout.ManifestPath);
+
+        validation.IsValid.Should().BeTrue();
+        artifact.EventSliceSet.Should().NotBeNull();
+        artifact.PhaseSliceSet.Should().NotBeNull();
+        artifact.PhasePolicy.Should().NotBeNull();
+        artifact.OpticalChannelsDefinition.Should().NotBeNull();
+    }
+
+    [Fact]
+    public void Phase3_Validation_Fails_When_Observed_Set_Does_Not_Match_Raw_Count()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var artifact = Phase3ArtifactFactory.CreateValid(tempDir, "phase3-bad-observed-set");
+        JsonFile.Mutate(artifact.Layout.EventSlicePath, json =>
+        {
+            json["observedSet"]!["rawSliceCount"] = 31;
+        });
+        artifact = Phase2ArtifactFactory.RefreshIntegrity(artifact);
+
+        var validation = new HopngArtifactValidator().Validate(artifact.Layout.ManifestPath);
+
+        validation.IsValid.Should().BeFalse();
+        validation.Errors.Should().Contain(issue => issue.Code == ValidationErrorCode.InvalidEventSlice);
+    }
+
+    [Fact]
+    public void Phase3_Validation_Fails_When_Phase_Policy_Uses_Unsupported_Aggregation_Mode()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var artifact = Phase3ArtifactFactory.CreateValid(tempDir, "phase3-bad-policy");
+        JsonFile.Mutate(artifact.Layout.PhasePolicyPath, json =>
+        {
+            json["aggregationPolicies"]!["drift"] = "median";
+        });
+        artifact = Phase2ArtifactFactory.RefreshIntegrity(artifact);
+
+        var validation = new HopngArtifactValidator().Validate(artifact.Layout.ManifestPath);
+
+        validation.IsValid.Should().BeFalse();
+        validation.Errors.Should().Contain(issue => issue.Code == ValidationErrorCode.InvalidPhasePolicy);
+    }
+
+    [Fact]
+    public void Phase3_Render_Is_Deterministic_And_Flags_Drift()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var artifact = Phase3ArtifactFactory.CreateValid(tempDir, "phase3-render");
+        var validation = new HopngArtifactValidator().Validate(artifact.Layout.ManifestPath);
+        var service = new TemporalPhaseStackService();
+
+        var first = service.Render(artifact, validation, "privileged");
+        var second = service.Render(artifact, validation, "privileged");
+
+        first.Status.Should().Be(TemporalStackStatus.LawfullyDerived);
+        first.RequiredChannelCoverage.Should().BeTrue();
+        first.DriftFlags.Should().NotBeEmpty();
+        first.Should().BeEquivalentTo(second);
+    }
+
+    [Fact]
+    public void Prime_Safe_View_Exposes_Temporal_Metadata_Without_Raw_Payloads()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var artifact = Phase3ArtifactFactory.CreateValid(tempDir, "phase3-prime-view");
+        var validation = new HopngArtifactValidator().Validate(artifact.Layout.ManifestPath);
+        var view = new HopngArtifactInspector().BuildPrimeSafeView(artifact, validation);
+        var json = JsonSerializer.Serialize(view);
+
+        json.Should().Contain("temporalSummary");
+        json.Should().Contain("SliceSummaries");
+        json.Should().NotContain("\"eventSlices\"");
+        json.Should().NotContain("\"universeStates\"");
+    }
+
+    [Fact]
+    public void Phase3_Slice_Digests_Remain_Stable_Across_Repeated_Validation()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var artifact = Phase3ArtifactFactory.CreateValid(tempDir, "phase3-digests");
+        var firstLoad = new HopngArtifactLoader().Load(artifact.Layout.ManifestPath);
+        var secondLoad = new HopngArtifactLoader().Load(artifact.Layout.ManifestPath);
+
+        firstLoad.EventSliceSet!.Slices.Select(slice => slice.SliceDigest)
+            .Should()
+            .Equal(secondLoad.EventSliceSet!.Slices.Select(slice => slice.SliceDigest));
+        firstLoad.PhaseSliceSet!.Slices.Select(slice => slice.SliceDigest)
+            .Should()
+            .Equal(secondLoad.PhaseSliceSet!.Slices.Select(slice => slice.SliceDigest));
+    }
 }

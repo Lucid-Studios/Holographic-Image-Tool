@@ -16,4 +16,8 @@ public sealed record LoadedHopngArtifact
     public GluingManifest? GluingManifest { get; init; }
     public ProjectionRules? ProjectionRules { get; init; }
     public LegibilityProfile? LegibilityProfile { get; init; }
+    public EventSliceSet? EventSliceSet { get; init; }
+    public PhaseSliceSet? PhaseSliceSet { get; init; }
+    public PhasePolicy? PhasePolicy { get; init; }
+    public OpticalChannelsDefinition? OpticalChannelsDefinition { get; init; }
 }

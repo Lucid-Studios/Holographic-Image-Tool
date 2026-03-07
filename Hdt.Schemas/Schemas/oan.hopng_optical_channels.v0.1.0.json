@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "oan.hopng_optical_channels.v0.1.0.json",
+  "title": "HOPNG Optical Channels",
+  "type": "object",
+  "required": ["schema", "schemaVersion", "artifactId", "requiredChannels", "reservedChannels", "channels"],
+  "properties": {
+    "schema": { "const": "oan.hopng_optical_channels" },
+    "schemaVersion": { "const": "0.1.0" },
+    "artifactId": { "type": "string" }
+  }
+}

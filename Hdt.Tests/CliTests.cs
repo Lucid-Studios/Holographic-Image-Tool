@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Hdt.Cli;
+using Hdt.Core.Models;
 using Hdt.Core.Services;
 using Hdt.Tests.TestSupport;
 using System.Text.Json;
@@ -97,5 +98,39 @@ public sealed class CliTests
         comparisonDocument.RootElement.GetProperty("classification").GetString().Should().Be("formed-vs-flattened");
         comparisonDocument.RootElement.GetProperty("leftStatus").GetString().Should().Be("LawfullyFormed");
         comparisonDocument.RootElement.GetProperty("rightStatus").GetString().Should().Be("FlattenedOrUnsupported");
+    }
+
+    [Fact]
+    public void Cli_Render_Phase_Stack_Returns_Temporal_Summary()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var artifact = Phase3ArtifactFactory.CreateValid(tempDir, "cli-phase3");
+        var output = new StringWriter();
+        var runner = new CliRunner(output);
+
+        var exitCode = runner.Execute(["render-phase-stack", "--path", artifact.Layout.ManifestPath, "--view", "prime", "--json"]);
+        var renderJson = output.ToString();
+        using var renderDocument = JsonDocument.Parse(renderJson);
+
+        exitCode.Should().Be(0, renderJson);
+        renderDocument.RootElement.GetProperty("status").GetInt32().Should().Be((int)TemporalStackStatus.LawfullyDerived);
+        renderDocument.RootElement.GetProperty("phaseSliceCount").GetInt32().Should().BeGreaterThan(0);
+        renderDocument.RootElement.TryGetProperty("eventSlices", out _).Should().BeFalse();
+    }
+
+    [Fact]
+    public void Cli_Render_Phase_Stack_Returns_Nonzero_When_Temporal_Support_Is_Absent()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var artifact = Phase2ArtifactFactory.CreateValid(tempDir, "cli-no-phase3");
+        var output = new StringWriter();
+        var runner = new CliRunner(output);
+
+        var exitCode = runner.Execute(["render-phase-stack", "--path", artifact.Layout.ManifestPath, "--json"]);
+        var renderJson = output.ToString();
+        using var renderDocument = JsonDocument.Parse(renderJson);
+
+        exitCode.Should().Be(25, renderJson);
+        renderDocument.RootElement.GetProperty("status").GetInt32().Should().Be((int)TemporalStackStatus.Unsupported);
     }
 }

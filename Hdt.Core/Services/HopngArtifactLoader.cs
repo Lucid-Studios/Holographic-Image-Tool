@@ -25,7 +25,11 @@ public sealed class HopngArtifactLoader
             UniverseLayerSet = TryReadOptional<UniverseLayerSet>(manifest, layout, "universe-layer"),
             GluingManifest = TryReadOptional<GluingManifest>(manifest, layout, "gluing-manifest"),
             ProjectionRules = TryReadOptional<ProjectionRules>(manifest, layout, "projection-rules"),
-            LegibilityProfile = TryReadOptional<LegibilityProfile>(manifest, layout, "legibility-profile")
+            LegibilityProfile = TryReadOptional<LegibilityProfile>(manifest, layout, "legibility-profile"),
+            EventSliceSet = TryReadOptional<EventSliceSet>(manifest, layout, "event-slices"),
+            PhaseSliceSet = TryReadOptional<PhaseSliceSet>(manifest, layout, "phase-slices"),
+            PhasePolicy = TryReadOptional<PhasePolicy>(manifest, layout, "phase-policy"),
+            OpticalChannelsDefinition = TryReadOptional<OpticalChannelsDefinition>(manifest, layout, "optical-channels")
         };
     }
 

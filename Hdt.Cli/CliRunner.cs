@@ -13,6 +13,7 @@ public sealed class CliRunner
     private readonly HopngArtifactInspector _inspector = new();
     private readonly GovernedProjectionDerivationService _projectionDerivationService = new();
     private readonly ProjectionSupportComparisonService _projectionComparisonService = new();
+    private readonly TemporalPhaseStackService _temporalPhaseStackService = new();
 
     public CliRunner(TextWriter writer)
     {
@@ -38,7 +39,7 @@ public sealed class CliRunner
                 "validate" => ValidateArtifact(options),
                 "show" => ShowArtifact(options),
                 "merge-layers" => MergeLayers(options),
-                "render-phase-stack" => Reserved("Render-HOPNGPhaseStack", 3),
+                "render-phase-stack" => RenderPhaseStack(options),
                 "compare-surfaces" => CompareSurfaces(options),
                 "invoke-formation" => Reserved("Invoke-HOPNGFormation", 5),
                 "bind-oe" => Reserved("Bind-HOPNGToOE", 6),
@@ -149,6 +150,46 @@ public sealed class CliRunner
         };
     }
 
+    private int RenderPhaseStack(CliOptions options)
+    {
+        var view = options.Get("view", "prime");
+        var rawSliceHorizon = options.Get("h") is { } horizonText
+            ? int.Parse(horizonText)
+            : (int?)null;
+        var path = options.Require("path");
+        var artifact = _loader.Load(path);
+        var validation = _validator.Validate(path);
+        var result = _temporalPhaseStackService.Render(artifact, validation, view, rawSliceHorizon);
+
+        if (options.Json)
+        {
+            Write(result, true);
+        }
+        else
+        {
+            _writer.WriteLine($"Temporal stack status: {result.Status}");
+            _writer.WriteLine($"Observed duration: {result.ObservedDurationMs} ms");
+            _writer.WriteLine($"Base cadence: {result.BaseRawCadenceMs} ms");
+            _writer.WriteLine($"Raw slices: {result.RawSliceCount}");
+            _writer.WriteLine($"Observed events: {result.ObservedEventCount}");
+            _writer.WriteLine($"Event slices: {result.EventSliceCount}");
+            _writer.WriteLine($"Phase slices: {result.PhaseSliceCount}");
+            _writer.WriteLine($"Grouping: {result.GroupingSummary}");
+            _writer.WriteLine($"Horizon: {result.HorizonRawSlices} raw slices / {result.HorizonDurationMs} ms");
+            _writer.WriteLine($"Required channels covered: {result.RequiredChannelCoverage}");
+            _writer.WriteLine($"Payload mode: {result.PayloadMode}");
+            _writer.WriteLine($"Drift flags: {result.DriftFlags.Count}");
+            _writer.WriteLine($"Topology flags: {result.TopologyChangeFlags.Count}");
+        }
+
+        return result.Status switch
+        {
+            Hdt.Core.Models.TemporalStackStatus.LawfullyDerived => 0,
+            Hdt.Core.Models.TemporalStackStatus.StructurallyIncomplete => 24,
+            _ => 25
+        };
+    }
+
     private int Reserved(string commandName, int phase)
     {
         _writer.WriteLine(ReservedPhaseCommand.BuildMessage(commandName, phase));
@@ -169,8 +210,9 @@ public sealed class CliRunner
         _writer.WriteLine("  validate --path <manifest-or-png> [--json]");
         _writer.WriteLine("  show --path <manifest-or-png> [--view prime|privileged] [--json]");
         _writer.WriteLine("  merge-layers --path <manifest-or-png> [--json]");
+        _writer.WriteLine("  render-phase-stack --path <manifest-or-png> [--view prime|privileged] [--h <raw-slice-horizon>] [--json]");
         _writer.WriteLine("  compare-surfaces --left <manifest-or-png> --right <manifest-or-png> [--json]");
-        _writer.WriteLine("  render-phase-stack | invoke-formation | bind-oe");
+        _writer.WriteLine("  invoke-formation | bind-oe");
         _writer.WriteLine("Exit codes:");
         _writer.WriteLine("  0  lawful success");
         _writer.WriteLine("  24 structurally incomplete derivation or comparison");

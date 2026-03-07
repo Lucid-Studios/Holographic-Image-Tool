@@ -16,10 +16,18 @@ public sealed class HopngArtifactValidator
         ["projection-rules"] = "oan.hopng_projection_rules",
         ["legibility-profile"] = "oan.hopng_legibility_profile"
     };
+    private static readonly IReadOnlyDictionary<string, string> Phase3RoleSchemaMap = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["event-slices"] = "oan.hopng_event_slice",
+        ["phase-slices"] = "oan.hopng_phase_slice",
+        ["phase-policy"] = "oan.hopng_phase_policy",
+        ["optical-channels"] = "oan.hopng_optical_channels"
+    };
 
     private readonly ArtifactJsonStore _jsonStore = new();
     private readonly HopngArtifactLoader _loader = new();
     private readonly Ed25519SignatureService _signatureService = new();
+    private readonly TemporalPhaseStackService _temporalPhaseStackService = new();
 
     public ValidationResult Validate(string path)
     {
@@ -69,12 +77,14 @@ public sealed class HopngArtifactValidator
 
         ValidateReferencedSidecars(artifact, result);
         ValidateOptionalPhase2Schemas(artifact, result);
+        ValidateOptionalPhase3Schemas(artifact, result);
         ValidateLawfulStructure(artifact, result);
         ValidateDigests(artifact, result);
         ValidateHashSidecar(artifact, result);
         ValidateSignature(artifact, result);
         ValidateVisibilityPolicy(artifact, result);
         ValidateRelationalStructure(artifact, result);
+        ValidateTemporalStructure(artifact, result);
 
         return result;
     }
@@ -161,6 +171,24 @@ public sealed class HopngArtifactValidator
         }
     }
 
+    private void ValidateOptionalPhase3Schemas(LoadedHopngArtifact artifact, ValidationResult result)
+    {
+        foreach (var pair in Phase3RoleSchemaMap)
+        {
+            var sidecar = artifact.Manifest.Sidecars.FirstOrDefault(candidate => string.Equals(candidate.Role, pair.Key, StringComparison.Ordinal));
+            if (sidecar is null)
+            {
+                continue;
+            }
+
+            var path = Path.Combine(artifact.Layout.DirectoryPath, sidecar.Path);
+            if (File.Exists(path))
+            {
+                ValidateSchema(path, pair.Value, result);
+            }
+        }
+    }
+
     private static void ValidateReferencedSidecars(LoadedHopngArtifact artifact, ValidationResult result)
     {
         foreach (var sidecar in artifact.Manifest.Sidecars)
@@ -226,6 +254,20 @@ public sealed class HopngArtifactValidator
         ValidateGluingManifest(artifact, universeLayerSet, result);
         ValidateProjectionRules(artifact, universeLayerSet, result);
         ValidateLegibilityProfile(artifact, universeLayerSet, result);
+    }
+
+    private void ValidateTemporalStructure(LoadedHopngArtifact artifact, ValidationResult result)
+    {
+        var hasPhase3References = artifact.Manifest.Sidecars.Any(sidecar => Phase3RoleSchemaMap.ContainsKey(sidecar.Role));
+        if (!hasPhase3References)
+        {
+            return;
+        }
+
+        foreach (var issue in _temporalPhaseStackService.ValidateTemporalContracts(artifact))
+        {
+            result.Errors.Add(issue);
+        }
     }
 
     private static void ValidateUniverseLayerSet(LoadedHopngArtifact artifact, UniverseLayerSet universeLayerSet, ValidationResult result)

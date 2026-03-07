@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "oan.hopng_event_slice.v0.1.0.json",
+  "title": "HOPNG Event Slice Set",
+  "type": "object",
+  "required": ["schema", "schemaVersion", "artifactId", "observedSet", "slices"],
+  "properties": {
+    "schema": { "const": "oan.hopng_event_slice" },
+    "schemaVersion": { "const": "0.1.0" },
+    "artifactId": { "type": "string" },
+    "observedSet": {
+      "type": "object",
+      "required": [
+        "observedSetId",
+        "artifactId",
+        "observedDurationMs",
+        "baseSliceCadenceMs",
+        "rawSliceCount",
+        "observedEventCount",
+        "eventGroupingMode",
+        "eventGroupingSizeRawSlices",
+        "protectedEvidenceRefs",
+        "primeSafeInspectionMode",
+        "dataCustodyMode"
+      ]
+    },
+    "slices": {
+      "type": "array",
+      "minItems": 1
+    }
+  }
+}

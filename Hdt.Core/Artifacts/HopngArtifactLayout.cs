@@ -15,6 +15,10 @@ public sealed record HopngArtifactLayout
     public string GluingManifestPath => Path.Combine(DirectoryPath, $"{BaseName}.gluing-manifest.json");
     public string ProjectionRulesPath => Path.Combine(DirectoryPath, $"{BaseName}.projection-rules.json");
     public string LegibilityProfilePath => Path.Combine(DirectoryPath, $"{BaseName}.legibility-profile.json");
+    public string EventSlicePath => Path.Combine(DirectoryPath, $"{BaseName}.event-slices.json");
+    public string PhaseSlicePath => Path.Combine(DirectoryPath, $"{BaseName}.phase-slices.json");
+    public string PhasePolicyPath => Path.Combine(DirectoryPath, $"{BaseName}.phase-policy.json");
+    public string OpticalChannelsPath => Path.Combine(DirectoryPath, $"{BaseName}.optical-channels.json");
     public string HashPath => Path.Combine(DirectoryPath, $"{BaseName}.hash.json");
     public string SignaturePath => Path.Combine(DirectoryPath, $"{BaseName}.signature.json");
     public string PrivateKeyPath => Path.Combine(DirectoryPath, $"{BaseName}.ed25519.private.key");

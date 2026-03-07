@@ -246,5 +246,7 @@ Artifacts become runtime-governed participants in Sanctuary and OE life.
 ## Current Status
 
 - Phase 1 is implemented
-- Phases 2 through 6 are defined here as the governing semantic roadmap
+- Phase 2 is implemented as the lawful relational operator layer
+- Phase 3 Milestone 1 is implemented as the first single-artifact temporal layer
+- Phases 4 through 6 remain defined here as the governing semantic roadmap
 - [`PHASE_BACKLOG.md`](./PHASE_BACKLOG.md) remains the shorter execution-oriented companion document

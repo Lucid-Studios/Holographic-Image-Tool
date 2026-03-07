@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "oan.hopng_phase_policy.v0.1.0.json",
+  "title": "HOPNG Phase Policy",
+  "type": "object",
+  "required": [
+    "schema",
+    "schemaVersion",
+    "artifactId",
+    "rawCadenceMs",
+    "eventGroupingMode",
+    "eventGroupingSizeRawSlices",
+    "phaseWindowMode",
+    "phaseWindowSizeEventSlices",
+    "comparisonHorizonRawSlices",
+    "aggregationPolicies",
+    "primeSafeInspectionMode",
+    "privilegedInspectionMode"
+  ],
+  "properties": {
+    "schema": { "const": "oan.hopng_phase_policy" },
+    "schemaVersion": { "const": "0.1.0" },
+    "artifactId": { "type": "string" }
+  }
+}
