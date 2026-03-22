@@ -48,6 +48,8 @@ public static class Phase3ArtifactFactory
             EventGroupingSizeRawSlices = 10,
             PhaseWindowMode = "fixed_event_count",
             PhaseWindowSizeEventSlices = 2,
+            PhaseWindowDurationMs = 20000,
+            MaxPhaseWindowSpanMs = 20000,
             ComparisonHorizonRawSlices = 10,
             AggregationPolicies = new Dictionary<string, string>(StringComparer.Ordinal)
             {
@@ -55,6 +57,7 @@ public static class Phase3ArtifactFactory
                 ["drift"] = "delta",
                 ["bloom"] = "latest"
             },
+            StateThresholds = new TemporalStateThresholdPolicy(),
             PrimeSafeInspectionMode = "metadata_only",
             PrivilegedInspectionMode = "full_payload"
         };

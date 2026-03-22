@@ -11,6 +11,7 @@ public sealed class CliRunner
     private readonly HopngArtifactValidator _validator = new();
     private readonly HopngArtifactLoader _loader = new();
     private readonly HopngArtifactInspector _inspector = new();
+    private readonly Phase3SampleArtifactBuilder _phase3SampleBuilder = new();
     private readonly GovernedProjectionDerivationService _projectionDerivationService = new();
     private readonly ProjectionSupportComparisonService _projectionComparisonService = new();
     private readonly TemporalPhaseStackService _temporalPhaseStackService = new();
@@ -36,6 +37,8 @@ public sealed class CliRunner
             return command switch
             {
                 "new" => CreateArtifact(options),
+                "new-phase3-sample" => CreatePhase3Sample(options),
+                "new-phase3-invalid-sample" => CreateInvalidPhase3Sample(options),
                 "validate" => ValidateArtifact(options),
                 "show" => ShowArtifact(options),
                 "merge-layers" => MergeLayers(options),
@@ -73,6 +76,60 @@ public sealed class CliRunner
             manifest = artifact.Layout.ManifestPath,
             projection = artifact.Layout.ProjectionPath,
             signature = artifact.Layout.SignaturePath
+        }, options.Json);
+
+        return 0;
+    }
+
+    private int CreatePhase3Sample(CliOptions options)
+    {
+        var request = new NewHopngRequest(
+            options.Require("output-dir"),
+            options.Require("name"),
+            options.Get("signer", Environment.UserName),
+            options.Get("key-id", "local-dev-key"),
+            options.Get("display-name"),
+            options.Get("artifact-id"),
+            options.Get("private-key"),
+            options.Get("private-key-out"),
+            options.Get("public-key-out"));
+
+        var artifact = _phase3SampleBuilder.Create(request);
+        Write(new
+        {
+            artifactId = artifact.Manifest.ArtifactId,
+            manifest = artifact.Layout.ManifestPath,
+            projection = artifact.Layout.ProjectionPath,
+            signature = artifact.Layout.SignaturePath,
+            eventSlices = artifact.Layout.EventSlicePath,
+            phaseSlices = artifact.Layout.PhaseSlicePath
+        }, options.Json);
+
+        return 0;
+    }
+
+    private int CreateInvalidPhase3Sample(CliOptions options)
+    {
+        var request = new NewHopngRequest(
+            options.Require("output-dir"),
+            options.Require("name"),
+            options.Get("signer", Environment.UserName),
+            options.Get("key-id", "local-dev-key"),
+            options.Get("display-name"),
+            options.Get("artifact-id"),
+            options.Get("private-key"),
+            options.Get("private-key-out"),
+            options.Get("public-key-out"));
+
+        var artifact = _phase3SampleBuilder.CreateInvalidDerivedPhaseSlice(request);
+        Write(new
+        {
+            artifactId = artifact.Manifest.ArtifactId,
+            manifest = artifact.Layout.ManifestPath,
+            projection = artifact.Layout.ProjectionPath,
+            signature = artifact.Layout.SignaturePath,
+            eventSlices = artifact.Layout.EventSlicePath,
+            phaseSlices = artifact.Layout.PhaseSlicePath
         }, options.Json);
 
         return 0;
@@ -207,6 +264,8 @@ public sealed class CliRunner
     {
         _writer.WriteLine("Hdt.Cli commands:");
         _writer.WriteLine("  new --output-dir <dir> --name <artifact> [--display-name <text>] [--signer <name>] [--key-id <id>] [--json]");
+        _writer.WriteLine("  new-phase3-sample --output-dir <dir> --name <artifact> [--display-name <text>] [--signer <name>] [--key-id <id>] [--json]");
+        _writer.WriteLine("  new-phase3-invalid-sample --output-dir <dir> --name <artifact> [--display-name <text>] [--signer <name>] [--key-id <id>] [--json]");
         _writer.WriteLine("  validate --path <manifest-or-png> [--json]");
         _writer.WriteLine("  show --path <manifest-or-png> [--view prime|privileged] [--json]");
         _writer.WriteLine("  merge-layers --path <manifest-or-png> [--json]");

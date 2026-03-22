@@ -10,8 +10,25 @@ public sealed record PhasePolicy
     public int EventGroupingSizeRawSlices { get; init; }
     public string PhaseWindowMode { get; init; } = string.Empty;
     public int PhaseWindowSizeEventSlices { get; init; }
+    public int PhaseWindowDurationMs { get; init; }
+    public int MaxPhaseWindowSpanMs { get; init; }
     public int ComparisonHorizonRawSlices { get; init; }
     public Dictionary<string, string> AggregationPolicies { get; init; } = new(StringComparer.Ordinal);
+    public TemporalStateThresholdPolicy? StateThresholds { get; init; }
     public string PrimeSafeInspectionMode { get; init; } = "metadata_only";
     public string PrivilegedInspectionMode { get; init; } = "full_payload";
+}
+
+public sealed record TemporalStateThresholdPolicy
+{
+    public double RisingPressureMin { get; init; } = 0.35;
+    public double DriftingAbsoluteMin { get; init; } = 0.15;
+    public double PropagatingBloomMin { get; init; } = 0.75;
+    public double RupturePressureMin { get; init; } = 0.45;
+    public double RuptureDriftAbsoluteMin { get; init; } = 0.20;
+    public double DirectionDriftAbsoluteMin { get; init; } = 0.05;
+    public double ForcePressureWeight { get; init; } = 0.45;
+    public double ForceDriftWeight { get; init; } = 0.35;
+    public double ForceBloomWeight { get; init; } = 0.20;
+    public double ForceTopologyBonus { get; init; } = 0.15;
 }

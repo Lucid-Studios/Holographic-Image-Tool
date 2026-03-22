@@ -22,6 +22,8 @@ Phase 3 release-ready assumes completion of:
 - [`PHASE_3_MILESTONE_2.md`](./PHASE_3_MILESTONE_2.md)
 - [`PHASE_3_MILESTONE_3.md`](./PHASE_3_MILESTONE_3.md)
 
+Planned Milestone 4 heterochronous channel work is intentionally outside this current single-clock release gate.
+
 ## Required Operator Surface
 
 By release-ready, the public temporal operator surface should include:
@@ -47,6 +49,8 @@ Release-ready requires intentional public-safe reference artifacts for:
 
 No committed private signing keys should exist in reference artifacts.
 
+The current hardening baseline already keeps `examples/phase3-sample.*` as the public-safe Milestone 1 temporal reference set and `examples/phase3-invalid-derived.*` as the signed malformed temporal reference set.
+
 ## Verification Gates
 
 Required verification:
@@ -58,6 +62,8 @@ Required verification:
   - temporal state classification
   - cross-artifact temporal comparison
 - documented Prime-safe verification path
+
+The current repo-local smoke path should remain wrapper-backed and artifact-oriented, rather than relying only on filtered test execution. Failure-path verification should also remain artifact-backed so deterministic temporal contract failures stay reproducible.
 
 ## Documentation Gates
 

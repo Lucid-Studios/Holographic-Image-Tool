@@ -23,7 +23,7 @@ Phase 1 defines a `.hopng` as a visible PNG projection plus deterministic sideca
 
 - `*.event-slices.json`: observed-set header plus grouped event slices with raw-range provenance, protected evidence references, and per-universe `pressure`, `drift`, and `bloom`
 - `*.phase-slices.json`: derived phase slices built from contiguous event windows with exact source-event and raw-range provenance
-- `*.phase-policy.json`: raw cadence, event grouping, phase window, comparison horizon, aggregation, and inspection policy
+- `*.phase-policy.json`: raw cadence, event grouping, phase window mode, explicit phase-window duration and max span, comparison horizon, aggregation, explicit temporal state thresholds, and inspection policy
 - `*.optical-channels.json`: channel catalog declaring required and reserved temporal channels and their canonical analytic meaning
 
 ## Validation rules
@@ -58,6 +58,8 @@ When Phase 3 sidecars are declared:
 - every participating universe id must exist in the Phase 2 universe declarations
 - required temporal channels `pressure`, `drift`, and `bloom` must exist for every participating universe state
 - aggregation policies are limited to `latest`, `mean`, and `delta`
+- phase-window duration and max span must declare a lawful time basis for each derived phase slice
+- state-threshold policy must declare deterministic threshold and derived-force weight values
 - slice digests must be stable and unique within each slice family
 - Prime-safe views must not expose raw temporal payloads
 - no interpolation or synthetic slices are allowed in Milestone 1
@@ -68,7 +70,7 @@ When Phase 3 sidecars are declared:
 
 `compare-surfaces` compares two artifacts by projection-formation class rather than image appearance alone. A lawful artifact can therefore be distinguished from a flattened or incomplete surface even when the visible projection might look similar.
 
-`render-phase-stack` derives and validates a single-artifact temporal stack from the Phase 3 sidecars. It reports observed-set duration, raw cadence, event and phase slice counts, required-channel coverage, drift flags, and relation-graph topology changes. Milestone 1 is diagnostic-only: it does not render PNG phase output, interpolate missing slices, or compare temporal stacks across different artifacts.
+`render-phase-stack` derives and validates a single-artifact temporal stack from the Phase 3 sidecars. It reports observed-set duration, raw cadence, event and phase slice counts, explicit timestamp spans, required-channel coverage, drift flags, relation-graph topology changes, and initial temporal state summaries backed by the explicit phase-policy thresholds and duration-window basis. Milestone 2 groundwork is diagnostic-only: it does not render PNG phase output, interpolate missing slices, or compare temporal stacks across different artifacts.
 
 ## Prime-safe inspection
 

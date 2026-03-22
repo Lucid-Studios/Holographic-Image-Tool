@@ -12,14 +12,34 @@
     "eventGroupingSizeRawSlices",
     "phaseWindowMode",
     "phaseWindowSizeEventSlices",
+    "phaseWindowDurationMs",
+    "maxPhaseWindowSpanMs",
     "comparisonHorizonRawSlices",
     "aggregationPolicies",
+    "stateThresholds",
     "primeSafeInspectionMode",
     "privilegedInspectionMode"
   ],
   "properties": {
     "schema": { "const": "oan.hopng_phase_policy" },
     "schemaVersion": { "const": "0.1.0" },
-    "artifactId": { "type": "string" }
+    "artifactId": { "type": "string" },
+    "phaseWindowDurationMs": { "type": "integer", "minimum": 1 },
+    "maxPhaseWindowSpanMs": { "type": "integer", "minimum": 1 },
+    "stateThresholds": {
+      "type": "object",
+      "required": [
+        "risingPressureMin",
+        "driftingAbsoluteMin",
+        "propagatingBloomMin",
+        "rupturePressureMin",
+        "ruptureDriftAbsoluteMin",
+        "directionDriftAbsoluteMin",
+        "forcePressureWeight",
+        "forceDriftWeight",
+        "forceBloomWeight",
+        "forceTopologyBonus"
+      ]
+    }
   }
 }

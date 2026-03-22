@@ -3,6 +3,7 @@ using Hdt.Cli;
 using Hdt.Core.Models;
 using Hdt.Core.Services;
 using Hdt.Tests.TestSupport;
+using System.IO;
 using System.Text.Json;
 
 namespace Hdt.Tests;
@@ -115,6 +116,10 @@ public sealed class CliTests
         exitCode.Should().Be(0, renderJson);
         renderDocument.RootElement.GetProperty("status").GetInt32().Should().Be((int)TemporalStackStatus.LawfullyDerived);
         renderDocument.RootElement.GetProperty("phaseSliceCount").GetInt32().Should().BeGreaterThan(0);
+        renderDocument.RootElement.GetProperty("stateSummaries").GetArrayLength().Should().BeGreaterThan(0);
+        renderDocument.RootElement.GetProperty("stateSummaries")[0].GetProperty("stateClass").GetString().Should().NotBeNullOrWhiteSpace();
+        renderDocument.RootElement.GetProperty("groupingSummary").GetString().Should().Contain("20000 ms");
+        renderDocument.RootElement.GetProperty("sliceSummaries")[0].GetProperty("timestampSpanMs").GetInt32().Should().BeGreaterThan(0);
         renderDocument.RootElement.TryGetProperty("eventSlices", out _).Should().BeFalse();
     }
 
@@ -132,5 +137,68 @@ public sealed class CliTests
 
         exitCode.Should().Be(25, renderJson);
         renderDocument.RootElement.GetProperty("status").GetInt32().Should().Be((int)TemporalStackStatus.Unsupported);
+    }
+
+    [Fact]
+    public void Cli_New_Phase3_Sample_Creates_A_Valid_Temporal_Artifact()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var output = new StringWriter();
+        var runner = new CliRunner(output);
+
+        var createExitCode = runner.Execute(["new-phase3-sample", "--output-dir", tempDir, "--name", "cli-phase3-sample", "--json"]);
+        var createJson = output.ToString();
+
+        output.GetStringBuilder().Clear();
+        var validateExitCode = runner.Execute(["validate", "--path", Path.Combine(tempDir, "cli-phase3-sample.hopng.json"), "--json"]);
+        var validateJson = output.ToString();
+
+        output.GetStringBuilder().Clear();
+        var renderExitCode = runner.Execute(["render-phase-stack", "--path", Path.Combine(tempDir, "cli-phase3-sample.hopng.json"), "--view", "prime", "--json"]);
+        var renderJson = output.ToString();
+        using var renderDocument = JsonDocument.Parse(renderJson);
+        using var phasePolicyDocument = JsonDocument.Parse(File.ReadAllText(Path.Combine(tempDir, "cli-phase3-sample.phase-policy.json")));
+
+        createExitCode.Should().Be(0, createJson);
+        validateExitCode.Should().Be(0, validateJson);
+        renderExitCode.Should().Be(0, renderJson);
+        renderDocument.RootElement.GetProperty("status").GetInt32().Should().Be((int)TemporalStackStatus.LawfullyDerived);
+        renderDocument.RootElement.GetProperty("phaseSliceCount").GetInt32().Should().BeGreaterThan(0);
+        phasePolicyDocument.RootElement.TryGetProperty("phaseWindowDurationMs", out _).Should().BeTrue();
+        phasePolicyDocument.RootElement.TryGetProperty("maxPhaseWindowSpanMs", out _).Should().BeTrue();
+        phasePolicyDocument.RootElement.TryGetProperty("stateThresholds", out _).Should().BeTrue();
+    }
+
+    [Fact]
+    public void Cli_New_Phase3_Invalid_Sample_Fails_Temporal_Validation()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var output = new StringWriter();
+        var runner = new CliRunner(output);
+
+        var createExitCode = runner.Execute(["new-phase3-invalid-sample", "--output-dir", tempDir, "--name", "cli-phase3-invalid", "--json"]);
+        var createJson = output.ToString();
+
+        output.GetStringBuilder().Clear();
+        var validateExitCode = runner.Execute(["validate", "--path", Path.Combine(tempDir, "cli-phase3-invalid.hopng.json"), "--json"]);
+        var validateJson = output.ToString();
+        using var validateDocument = JsonDocument.Parse(validateJson);
+
+        output.GetStringBuilder().Clear();
+        var renderExitCode = runner.Execute(["render-phase-stack", "--path", Path.Combine(tempDir, "cli-phase3-invalid.hopng.json"), "--view", "prime", "--json"]);
+        var renderJson = output.ToString();
+        using var renderDocument = JsonDocument.Parse(renderJson);
+
+        createExitCode.Should().Be(0, createJson);
+        validateExitCode.Should().Be((int)Hdt.Core.Validation.ValidationErrorCode.InvalidPhaseSlice, validateJson);
+        validateDocument.RootElement.GetProperty("isValid").GetBoolean().Should().BeFalse();
+        validateDocument.RootElement.GetProperty("errors").EnumerateArray()
+            .Any(error => error.GetProperty("code").GetInt32() == (int)Hdt.Core.Validation.ValidationErrorCode.InvalidPhaseSlice)
+            .Should().BeTrue(validateJson);
+        renderExitCode.Should().Be(24, renderJson);
+        renderDocument.RootElement.GetProperty("status").GetInt32().Should().Be((int)TemporalStackStatus.StructurallyIncomplete);
+        renderDocument.RootElement.GetProperty("validationIssues").EnumerateArray()
+            .Any(error => error.GetProperty("code").GetInt32() == (int)Hdt.Core.Validation.ValidationErrorCode.InvalidPhaseSlice)
+            .Should().BeTrue(renderJson);
     }
 }

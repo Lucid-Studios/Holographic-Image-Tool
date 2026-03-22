@@ -16,11 +16,13 @@ Supported operator commands:
 
 ```powershell
 .\New-HOPNG.ps1 --output-dir .\examples --name sample --signer "Local Tester" --key-id "dev-key"
+.\New-HOPNGPhase3Sample.ps1 --output-dir .\examples --name phase3-sample --json
+.\New-HOPNGPhase3InvalidSample.ps1 --output-dir .\examples --name phase3-invalid-derived --json
 .\Test-HOPNG.ps1 --path .\examples\phase2-sample.hopng.json --json
 .\Show-HOPNG.ps1 --path .\examples\phase2-sample.hopng.json --view privileged --json
 .\Merge-HOPNGLayers.ps1 --path .\examples\phase2-sample.hopng.json --json
 .\Compare-HOPNGSurfaces.ps1 --left .\examples\phase2-sample.hopng.json --right .\examples\phase1-sample.hopng.json --json
-.\Render-HOPNGPhaseStack.ps1 --path .\artifacts\temporal-sample.hopng.json --view prime --json
+.\Render-HOPNGPhaseStack.ps1 --path .\examples\phase3-sample.hopng.json --view prime --json
 ```
 
 Later-phase commands remain reserved:
@@ -28,7 +30,20 @@ Later-phase commands remain reserved:
 - `.\Invoke-HOPNGFormation.ps1`
 - `.\Bind-HOPNGToOE.ps1`
 
-`Render-HOPNGPhaseStack.ps1` requires an artifact that declares the Phase 3 temporal sidecars.
+`Render-HOPNGPhaseStack.ps1` requires an artifact that declares the Phase 3 temporal sidecars and now includes initial temporal state summaries backed by explicit `stateThresholds`, `phaseWindowDurationMs`, and `maxPhaseWindowSpanMs` in the phase policy.
+
+The committed public-safe temporal reference sets live under `.\examples\phase3-sample.*` and `.\examples\phase3-invalid-derived.*`.
+
+## Repo Checks
+
+Repo-local verification helpers:
+
+```powershell
+.\scripts\Invoke-HdtRepoChecks.ps1
+.\scripts\Invoke-Phase2ReleaseSmoke.ps1
+.\scripts\Invoke-Phase3ReleaseSmoke.ps1
+.\scripts\Invoke-Phase3FailureSmoke.ps1
+```
 
 ## Governance
 
@@ -68,6 +83,8 @@ A v1 artifact is a loose-sidecar set stored in one directory:
 
 Committed reference artifacts omit private signing keys. Signing-key generation is a local operator action.
 
+See [`examples/README.md`](examples/README.md) for the current committed reference sets, including the Phase 3 temporal sample.
+
 See [docs/ARTIFACT_MODEL.md](docs/ARTIFACT_MODEL.md) for the artifact contract and [docs/PHASE_BACKLOG.md](docs/PHASE_BACKLOG.md) for the staged roadmap.
 
 For the semantic progression of the system from trusted artifact to Sanctuary/OE runtime participant, see [docs/PHASE_ROADMAP.md](docs/PHASE_ROADMAP.md).
@@ -80,6 +97,14 @@ For the operator-facing hardening criteria for the current release target, see [
 
 For the first temporal implementation slice, see [docs/PHASE_3_MILESTONE_1.md](docs/PHASE_3_MILESTONE_1.md).
 
-For the remaining Phase 3 execution track, see [docs/PHASE_3_MILESTONE_2.md](docs/PHASE_3_MILESTONE_2.md), [docs/PHASE_3_MILESTONE_3.md](docs/PHASE_3_MILESTONE_3.md), and [docs/PHASE_3_RELEASE_READY.md](docs/PHASE_3_RELEASE_READY.md).
+For the remaining single-clock Phase 3 execution track, see [docs/PHASE_3_MILESTONE_2.md](docs/PHASE_3_MILESTONE_2.md), [docs/PHASE_3_MILESTONE_3.md](docs/PHASE_3_MILESTONE_3.md), and [docs/PHASE_3_RELEASE_READY.md](docs/PHASE_3_RELEASE_READY.md).
+
+For the planned heterochronous channel extension that could later ground a `.hogif` carrier, see [docs/PHASE_3_MILESTONE_4.md](docs/PHASE_3_MILESTONE_4.md).
+
+For the build-governance and research-planning documents behind that future `.hogif` track, see [docs/HOGIF_BUILD_GOVERNANCE.md](docs/HOGIF_BUILD_GOVERNANCE.md) and [docs/HOGIF_RESEARCH_TRACK.md](docs/HOGIF_RESEARCH_TRACK.md).
+
+For the planned morphism law that governs which transformations may act on identity-bearing `.hogif` fragments, see [docs/HOGIF_ADMISSIBLE_IDENTITY_MORPHISMS.md](docs/HOGIF_ADMISSIBLE_IDENTITY_MORPHISMS.md).
+
+For the broader doctrine tying identity continuity, telos, cryptographic authority, evidence carriers, and privacy posture together, see [docs/HONEST_SUBSTRATE_PRINCIPLES.md](docs/HONEST_SUBSTRATE_PRINCIPLES.md).
 
 For typed evidentiary artifact classes and layer-carrier guidance, see [docs/CAPTURE_PROFILES.md](docs/CAPTURE_PROFILES.md).

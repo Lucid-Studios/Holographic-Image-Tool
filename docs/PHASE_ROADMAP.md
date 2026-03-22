@@ -116,11 +116,22 @@ Artifacts can preserve evented change across governed slices.
 - two surfaces can be compared for topology similarity, force distribution, or drift
 - temporal semantics remain governed by explicit policy rather than hidden convention
 
-Phase 3 should complete in three execution slices:
+The current single-clock Phase 3 track should complete in three execution slices:
 
 - Milestone 1: single-artifact temporal semantics
 - Milestone 2: temporal state maturity
 - Milestone 3: cross-artifact temporal comparison
+
+A planned extension track follows after the single-clock baseline stabilizes:
+
+- Milestone 4: heterochronous temporal channel model
+
+The `.hogif` expression of that track should remain governance-first:
+
+- admissible identity morphisms must be defined before validator or carrier design
+- excursion and re-admission must be defined before carrier packaging
+- async validation must precede encoder or renderer work
+- identity scope and continuity scope must remain distinguishable
 
 ### Not Yet
 
@@ -254,6 +265,7 @@ Artifacts become runtime-governed participants in Sanctuary and OE life.
 - Phase 1 is implemented
 - Phase 2 is implemented as the lawful relational operator layer
 - Phase 3 Milestone 1 is implemented as the first single-artifact temporal layer
-- Phase 3 Milestones 2 and 3 are planned, followed by a Phase 3 release-ready hardening gate
+- Phase 3 Milestones 2 and 3 are planned, followed by a single-clock Phase 3 release-ready hardening gate
+- Phase 3 Milestone 4 is defined as a later heterochronous extension track and does not change the current release gate
 - Phases 4 through 6 remain defined here as the governing semantic roadmap
 - [`PHASE_BACKLOG.md`](./PHASE_BACKLOG.md) remains the shorter execution-oriented companion document

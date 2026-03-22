@@ -395,6 +395,64 @@ public sealed class ArtifactWorkflowTests
     }
 
     [Fact]
+    public void Phase3_Validation_Allows_Duration_Window_Mode_When_Timestamps_Align()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var artifact = Phase3ArtifactFactory.CreateValid(tempDir, "phase3-duration-window");
+        JsonFile.Mutate(artifact.Layout.PhasePolicyPath, json =>
+        {
+            json["phaseWindowMode"] = "duration_ms";
+            json["phaseWindowSizeEventSlices"] = 0;
+            json["phaseWindowDurationMs"] = 20000;
+            json["maxPhaseWindowSpanMs"] = 20000;
+        });
+        artifact = Phase2ArtifactFactory.RefreshIntegrity(artifact);
+
+        var validation = new HopngArtifactValidator().Validate(artifact.Layout.ManifestPath);
+
+        validation.IsValid.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Phase3_Validation_Fails_When_Duration_Window_Does_Not_Align_With_Timestamps()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var artifact = Phase3ArtifactFactory.CreateValid(tempDir, "phase3-duration-misaligned");
+        JsonFile.Mutate(artifact.Layout.PhasePolicyPath, json =>
+        {
+            json["phaseWindowMode"] = "duration_ms";
+            json["phaseWindowSizeEventSlices"] = 0;
+            json["phaseWindowDurationMs"] = 15000;
+            json["maxPhaseWindowSpanMs"] = 20000;
+        });
+        artifact = Phase2ArtifactFactory.RefreshIntegrity(artifact);
+
+        var validation = new HopngArtifactValidator().Validate(artifact.Layout.ManifestPath);
+
+        validation.IsValid.Should().BeFalse();
+        validation.Errors.Should().Contain(issue => issue.Code == ValidationErrorCode.InvalidPhaseSlice);
+    }
+
+    [Fact]
+    public void Phase3_Validation_Fails_When_State_Thresholds_Are_Invalid()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var artifact = Phase3ArtifactFactory.CreateValid(tempDir, "phase3-bad-thresholds");
+        JsonFile.Mutate(artifact.Layout.PhasePolicyPath, json =>
+        {
+            json["stateThresholds"]!["rupturePressureMin"] = 0.2;
+            json["stateThresholds"]!["risingPressureMin"] = 0.35;
+            json["stateThresholds"]!["forceTopologyBonus"] = -0.1;
+        });
+        artifact = Phase2ArtifactFactory.RefreshIntegrity(artifact);
+
+        var validation = new HopngArtifactValidator().Validate(artifact.Layout.ManifestPath);
+
+        validation.IsValid.Should().BeFalse();
+        validation.Errors.Should().Contain(issue => issue.Code == ValidationErrorCode.InvalidPhasePolicy);
+    }
+
+    [Fact]
     public void Phase3_Render_Is_Deterministic_And_Flags_Drift()
     {
         var tempDir = TestPaths.CreateTempDirectory();

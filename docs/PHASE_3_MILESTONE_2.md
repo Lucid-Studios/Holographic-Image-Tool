@@ -4,6 +4,8 @@ Phase 3 Milestone 2 deepens the single-artifact temporal system established in M
 
 The purpose of this milestone is to make the temporal layer operationally meaningful rather than merely structurally valid.
 
+Current groundwork on the build has started with initial `render-phase-stack` state summaries, derived-force reporting, explicit `stateThresholds`, and explicit duration-window fields carried in `phase-policy` sidecars. Full Milestone 2 completion still requires widened horizon rules.
+
 ## Intent
 
 Milestone 2 turns Phase 3 from basic temporal legality into stronger temporal interpretation.

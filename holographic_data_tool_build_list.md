@@ -116,6 +116,13 @@ Make `.hopng` capable of preserving tensor-native event slices with optical phas
 - optical phase channels are treated as lawful data channels, not decorative effects
 - two surfaces can be compared for topology similarity and force-distribution difference
 
+### Planned extension track
+- define heterochronous `.hogif` doctrine before any carrier or renderer work
+- define admissible identity morphisms before `.hogif` schema and validator work
+- treat identity as already containerized and govern the transformations acting on it
+- require excursion, transit, and readmission history to remain inspectable
+- keep private data contextual, but make cryptographic authority and attested state enforce the boundary
+
 ---
 
 ## Phase 4 — Cognitive Engram Forms
@@ -275,4 +282,3 @@ The Holographic Data Tool should eventually support:
 
 ## One-Line Purpose Statement
 The Holographic Data Tool is a governed artifact engine for creating, validating, and using `.hopng` objects as layered, tensor-native, visually legible cognitive containers for observation, preservation, formation, and lawful extension.
-

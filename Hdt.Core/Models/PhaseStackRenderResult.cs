@@ -21,6 +21,7 @@ public sealed record PhaseStackRenderResult
     public List<string> TopologyChangeFlags { get; init; } = [];
     public string PayloadMode { get; init; } = string.Empty;
     public List<TemporalSliceSummary> SliceSummaries { get; init; } = [];
+    public List<TemporalStateSummary> StateSummaries { get; init; } = [];
     public object? EventSlices { get; init; }
     public object? PhaseSlices { get; init; }
     public List<string> Issues { get; init; } = [];
@@ -34,6 +35,17 @@ public sealed record TemporalSliceSummary
     public int N { get; init; }
     public DateTimeOffset TimestampStartUtc { get; init; }
     public DateTimeOffset TimestampEndUtc { get; init; }
+    public int TimestampSpanMs { get; init; }
     public string RawRangeSummary { get; init; } = string.Empty;
     public List<string> Flags { get; init; } = [];
+}
+
+public sealed record TemporalStateSummary
+{
+    public string SliceId { get; init; } = string.Empty;
+    public int N { get; init; }
+    public string StateClass { get; init; } = string.Empty;
+    public double DerivedForceMagnitude { get; init; }
+    public string DerivedForceDirection { get; init; } = "neutral";
+    public List<string> BasisSignals { get; init; } = [];
 }

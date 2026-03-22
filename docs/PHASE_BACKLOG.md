@@ -60,8 +60,8 @@ See [`PHASE_2_MILESTONE_2.md`](./PHASE_2_MILESTONE_2.md).
 - reconcile docs and operator guidance with the now-live `merge-layers` and `compare-surfaces` commands
 - keep only clean Phase 1 and Phase 2 reference artifact sets under `examples/`
 - remove committed private signing keys from reference artifacts
-- add repo-local build and test automation
-- add one internal smoke path that proves create, validate, inspect, merge, and compare behavior through the public PowerShell surface
+- keep repo-local build, test, and smoke automation current as the operator surface expands
+- keep internal smoke paths current for Phase 2 public wrappers and Phase 3 temporal verification
 
 ### Release Gate
 
@@ -71,7 +71,7 @@ See [`PHASE_2_RELEASE_READY.md`](./PHASE_2_RELEASE_READY.md).
 
 ### Status
 
-Milestone 1 implemented; later temporal expansion remains planned.
+Milestone 1 implemented; later single-clock expansion and planned heterochronous extension remain ahead.
 
 ### Goal
 
@@ -80,11 +80,15 @@ Preserve evented change and tensor-native deltas rather than static lawful struc
 ### Backlog
 
 - harden the Phase 3 Milestone 1 operator surface and reference artifacts
-- add broader temporal examples once a public-safe Phase 3 example set is selected
+- expand temporal examples beyond the committed `examples/phase3-sample.*` baseline as Milestones 2 and 3 land
 - extend drift and topology diagnostics into richer temporal comparison after single-artifact semantics stabilize
 - implement duration-window and timestamp-span temporal policy support
 - implement derived `force` semantics and temporal state classification
 - implement governed cross-artifact temporal comparison after single-artifact semantics stabilize
+- define the heterochronous temporal channel doctrine before any `.hogif` carrier or async renderer work
+- define admissible identity morphism classes before `.hogif` schema or validator work
+- formalize `.hogif` excursion and re-admission governance before schema or encoder work
+- assemble a `.hogif` research corpus with lawful and unlawful excursion cases
 - harden the full Phase 3 operator surface for release readiness
 
 ### Implemented Milestone 1
@@ -120,6 +124,10 @@ See [`PHASE_3_MILESTONE_2.md`](./PHASE_3_MILESTONE_2.md).
 ### Planned Milestone 3
 
 See [`PHASE_3_MILESTONE_3.md`](./PHASE_3_MILESTONE_3.md).
+
+### Planned Milestone 4
+
+See [`PHASE_3_MILESTONE_4.md`](./PHASE_3_MILESTONE_4.md).
 
 ### Release Gate
 

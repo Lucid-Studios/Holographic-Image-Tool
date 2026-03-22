@@ -94,6 +94,7 @@ public sealed class TemporalPhaseStackService
         var expectedPhaseSlices = DeriveExpectedPhaseSlices(artifact);
         var coverage = HasRequiredChannelCoverage(artifact.EventSliceSet, artifact.OpticalChannelsDefinition);
         var sliceSummaries = BuildSliceSummaries(artifact.EventSliceSet, artifact.PhaseSliceSet);
+        var stateSummaries = BuildStateSummaries(artifact, artifact.PhaseSliceSet.Slices);
         var driftFlags = BuildDriftFlags(artifact.PhaseSliceSet.Slices, horizon, issues);
         var topologyFlags = BuildTopologyFlags(artifact, artifact.PhaseSliceSet.Slices);
         var eventIssues = ValidateTemporalContracts(artifact)
@@ -127,7 +128,7 @@ public sealed class TemporalPhaseStackService
             ObservedEventCount = observedSet.ObservedEventCount,
             EventSliceCount = artifact.EventSliceSet.Slices.Count,
             PhaseSliceCount = artifact.PhaseSliceSet.Slices.Count,
-            GroupingSummary = $"{artifact.PhasePolicy.EventGroupingMode}:{artifact.PhasePolicy.EventGroupingSizeRawSlices} raw slices -> {artifact.PhasePolicy.PhaseWindowMode}:{artifact.PhasePolicy.PhaseWindowSizeEventSlices} event slices",
+            GroupingSummary = BuildGroupingSummary(artifact.PhasePolicy),
             HorizonRawSlices = horizon,
             HorizonDurationMs = horizon * artifact.PhasePolicy.RawCadenceMs,
             RequiredChannelCoverage = coverage,
@@ -135,6 +136,7 @@ public sealed class TemporalPhaseStackService
             TopologyChangeFlags = topologyFlags,
             PayloadMode = payloadMode == "privileged" ? artifact.PhasePolicy.PrivilegedInspectionMode : artifact.PhasePolicy.PrimeSafeInspectionMode,
             SliceSummaries = sliceSummaries,
+            StateSummaries = stateSummaries,
             EventSlices = payloadMode == "privileged" ? artifact.EventSliceSet : null,
             PhaseSlices = payloadMode == "privileged" ? artifact.PhaseSliceSet : null,
             Issues = issues,
@@ -211,19 +213,15 @@ public sealed class TemporalPhaseStackService
         var eventSlices = artifact.EventSliceSet.Slices
             .OrderBy(slice => slice.N)
             .ToList();
-        var windowSize = artifact.PhasePolicy.PhaseWindowSizeEventSlices;
-        if (windowSize <= 0 || eventSlices.Count < windowSize)
+        var windows = BuildPhaseWindows(eventSlices, artifact.PhasePolicy);
+        if (windows.Count == 0)
         {
             return [];
         }
 
         var derived = new List<PhaseSlice>();
-        for (var index = windowSize - 1; index < eventSlices.Count; index++)
+        foreach (var window in windows)
         {
-            var window = eventSlices
-                .Skip(index - windowSize + 1)
-                .Take(windowSize)
-                .ToList();
             var first = window[0];
             var last = window[^1];
             var universeIds = window
@@ -365,7 +363,11 @@ public sealed class TemporalPhaseStackService
 
     private static void ValidatePhasePolicy(LoadedHopngArtifact artifact, PhasePolicy phasePolicy, List<ValidationIssue> issues)
     {
-        if (phasePolicy.RawCadenceMs <= 0 || phasePolicy.EventGroupingSizeRawSlices <= 0 || phasePolicy.PhaseWindowSizeEventSlices <= 0 || phasePolicy.ComparisonHorizonRawSlices <= 0)
+        if (phasePolicy.RawCadenceMs <= 0
+            || phasePolicy.EventGroupingSizeRawSlices <= 0
+            || phasePolicy.PhaseWindowDurationMs <= 0
+            || phasePolicy.MaxPhaseWindowSpanMs <= 0
+            || phasePolicy.ComparisonHorizonRawSlices <= 0)
         {
             issues.Add(new ValidationIssue(ValidationErrorCode.InvalidPhasePolicy, "Phase policy numeric values must be positive.", artifact.Layout.PhasePolicyPath));
         }
@@ -375,9 +377,34 @@ public sealed class TemporalPhaseStackService
             issues.Add(new ValidationIssue(ValidationErrorCode.InvalidPhasePolicy, "Milestone 1 only supports fixed_raw_count event grouping.", artifact.Layout.PhasePolicyPath));
         }
 
-        if (!string.Equals(phasePolicy.PhaseWindowMode, "fixed_event_count", StringComparison.Ordinal))
+        if (string.Equals(phasePolicy.PhaseWindowMode, "fixed_event_count", StringComparison.Ordinal))
         {
-            issues.Add(new ValidationIssue(ValidationErrorCode.InvalidPhasePolicy, "Milestone 1 only supports fixed_event_count phase windows.", artifact.Layout.PhasePolicyPath));
+            if (phasePolicy.PhaseWindowSizeEventSlices <= 0)
+            {
+                issues.Add(new ValidationIssue(ValidationErrorCode.InvalidPhasePolicy, "fixed_event_count phase windows require a positive phaseWindowSizeEventSlices value.", artifact.Layout.PhasePolicyPath));
+            }
+
+            var expectedDurationMs = phasePolicy.RawCadenceMs * phasePolicy.EventGroupingSizeRawSlices * phasePolicy.PhaseWindowSizeEventSlices;
+            if (phasePolicy.PhaseWindowDurationMs != expectedDurationMs)
+            {
+                issues.Add(new ValidationIssue(ValidationErrorCode.InvalidPhasePolicy, "fixed_event_count phase windows must declare a duration that matches the raw cadence and event grouping basis.", artifact.Layout.PhasePolicyPath));
+            }
+        }
+        else if (string.Equals(phasePolicy.PhaseWindowMode, "duration_ms", StringComparison.Ordinal))
+        {
+            if (phasePolicy.PhaseWindowDurationMs <= 0)
+            {
+                issues.Add(new ValidationIssue(ValidationErrorCode.InvalidPhasePolicy, "duration_ms phase windows require a positive phaseWindowDurationMs value.", artifact.Layout.PhasePolicyPath));
+            }
+        }
+        else
+        {
+            issues.Add(new ValidationIssue(ValidationErrorCode.InvalidPhasePolicy, "Phase policy only supports fixed_event_count and duration_ms phase windows.", artifact.Layout.PhasePolicyPath));
+        }
+
+        if (phasePolicy.MaxPhaseWindowSpanMs < phasePolicy.PhaseWindowDurationMs)
+        {
+            issues.Add(new ValidationIssue(ValidationErrorCode.InvalidPhasePolicy, "Max phase-window span must be greater than or equal to the declared phase-window duration.", artifact.Layout.PhasePolicyPath));
         }
 
         foreach (var requiredChannel in RequiredChannels)
@@ -386,6 +413,11 @@ public sealed class TemporalPhaseStackService
             {
                 issues.Add(new ValidationIssue(ValidationErrorCode.InvalidPhasePolicy, $"Channel '{requiredChannel}' must declare a supported aggregation mode.", artifact.Layout.PhasePolicyPath));
             }
+        }
+
+        if (phasePolicy.StateThresholds is not null)
+        {
+            ValidateStateThresholdPolicy(artifact, phasePolicy.StateThresholds, issues);
         }
     }
 
@@ -436,6 +468,13 @@ public sealed class TemporalPhaseStackService
             if (slice.RawSliceSpan != phasePolicy.EventGroupingSizeRawSlices)
             {
                 issues.Add(new ValidationIssue(ValidationErrorCode.InvalidEventSlice, $"Event slice '{slice.EventSliceId}' does not match the policy raw grouping size.", artifact.Layout.EventSlicePath));
+            }
+
+            var eventTimestampSpanMs = GetTimestampSpanMs(slice.TimestampStartUtc, slice.TimestampEndUtc);
+            var expectedEventTimestampSpanMs = slice.RawSliceSpan * phasePolicy.RawCadenceMs;
+            if (eventTimestampSpanMs != expectedEventTimestampSpanMs)
+            {
+                issues.Add(new ValidationIssue(ValidationErrorCode.InvalidEventSlice, $"Event slice '{slice.EventSliceId}' timestamp span does not match its raw cadence basis.", artifact.Layout.EventSlicePath));
             }
 
             if (previous is not null)
@@ -526,14 +565,31 @@ public sealed class TemporalPhaseStackService
                 issues.Add(new ValidationIssue(ValidationErrorCode.InvalidPhaseSlice, $"Phase slice '{slice.PhaseSliceId}' must have an ordered timestamp range.", artifact.Layout.PhaseSlicePath));
             }
 
-            if (slice.SourceEventSliceIds.Count != phasePolicy.PhaseWindowSizeEventSlices)
+            if (string.Equals(phasePolicy.PhaseWindowMode, "fixed_event_count", StringComparison.Ordinal)
+                && slice.SourceEventSliceIds.Count != phasePolicy.PhaseWindowSizeEventSlices)
             {
                 issues.Add(new ValidationIssue(ValidationErrorCode.InvalidPhaseSlice, $"Phase slice '{slice.PhaseSliceId}' does not match the policy event window size.", artifact.Layout.PhaseSlicePath));
+            }
+            else if (string.Equals(phasePolicy.PhaseWindowMode, "duration_ms", StringComparison.Ordinal)
+                && slice.SourceEventSliceIds.Count == 0)
+            {
+                issues.Add(new ValidationIssue(ValidationErrorCode.InvalidPhaseSlice, $"Phase slice '{slice.PhaseSliceId}' must declare at least one source event slice.", artifact.Layout.PhaseSlicePath));
             }
 
             if (slice.SourceRawStartN > slice.SourceRawEndN)
             {
                 issues.Add(new ValidationIssue(ValidationErrorCode.InvalidPhaseSlice, $"Phase slice '{slice.PhaseSliceId}' declares an invalid source raw range.", artifact.Layout.PhaseSlicePath));
+            }
+
+            var phaseTimestampSpanMs = GetTimestampSpanMs(slice.TimestampStartUtc, slice.TimestampEndUtc);
+            if (phaseTimestampSpanMs != phasePolicy.PhaseWindowDurationMs)
+            {
+                issues.Add(new ValidationIssue(ValidationErrorCode.InvalidPhaseSlice, $"Phase slice '{slice.PhaseSliceId}' timestamp span does not match the policy phase-window duration.", artifact.Layout.PhaseSlicePath));
+            }
+
+            if (phaseTimestampSpanMs > phasePolicy.MaxPhaseWindowSpanMs)
+            {
+                issues.Add(new ValidationIssue(ValidationErrorCode.InvalidPhaseSlice, $"Phase slice '{slice.PhaseSliceId}' exceeds the policy max phase-window span.", artifact.Layout.PhaseSlicePath));
             }
 
             foreach (var sourceEventSliceId in slice.SourceEventSliceIds)
@@ -626,6 +682,7 @@ public sealed class TemporalPhaseStackService
             N = slice.N,
             TimestampStartUtc = slice.TimestampStartUtc,
             TimestampEndUtc = slice.TimestampEndUtc,
+            TimestampSpanMs = GetTimestampSpanMs(slice.TimestampStartUtc, slice.TimestampEndUtc),
             RawRangeSummary = $"{slice.RawStartN}-{slice.RawEndN}"
         }));
 
@@ -636,8 +693,108 @@ public sealed class TemporalPhaseStackService
             N = slice.N,
             TimestampStartUtc = slice.TimestampStartUtc,
             TimestampEndUtc = slice.TimestampEndUtc,
+            TimestampSpanMs = GetTimestampSpanMs(slice.TimestampStartUtc, slice.TimestampEndUtc),
             RawRangeSummary = $"{slice.SourceRawStartN}-{slice.SourceRawEndN}"
         }));
+
+        return summaries;
+    }
+
+    private static void ValidateStateThresholdPolicy(
+        LoadedHopngArtifact artifact,
+        TemporalStateThresholdPolicy thresholds,
+        List<ValidationIssue> issues)
+    {
+        if (thresholds.RisingPressureMin <= 0d
+            || thresholds.DriftingAbsoluteMin <= 0d
+            || thresholds.PropagatingBloomMin <= 0d
+            || thresholds.RupturePressureMin <= 0d
+            || thresholds.RuptureDriftAbsoluteMin <= 0d
+            || thresholds.DirectionDriftAbsoluteMin <= 0d)
+        {
+            issues.Add(new ValidationIssue(ValidationErrorCode.InvalidPhasePolicy, "State-threshold policy values must be positive.", artifact.Layout.PhasePolicyPath));
+        }
+
+        if (thresholds.RupturePressureMin < thresholds.RisingPressureMin)
+        {
+            issues.Add(new ValidationIssue(ValidationErrorCode.InvalidPhasePolicy, "Rupture pressure threshold must be greater than or equal to the rising-pressure threshold.", artifact.Layout.PhasePolicyPath));
+        }
+
+        if (thresholds.RuptureDriftAbsoluteMin < thresholds.DriftingAbsoluteMin)
+        {
+            issues.Add(new ValidationIssue(ValidationErrorCode.InvalidPhasePolicy, "Rupture drift threshold must be greater than or equal to the drifting threshold.", artifact.Layout.PhasePolicyPath));
+        }
+
+        if (thresholds.ForcePressureWeight <= 0d
+            || thresholds.ForceDriftWeight <= 0d
+            || thresholds.ForceBloomWeight <= 0d
+            || thresholds.ForceTopologyBonus < 0d)
+        {
+            issues.Add(new ValidationIssue(ValidationErrorCode.InvalidPhasePolicy, "Derived-force weights must keep positive channel weights and a non-negative topology bonus.", artifact.Layout.PhasePolicyPath));
+        }
+
+        if (thresholds.ForcePressureWeight + thresholds.ForceDriftWeight + thresholds.ForceBloomWeight <= 0d)
+        {
+            issues.Add(new ValidationIssue(ValidationErrorCode.InvalidPhasePolicy, "Derived-force weights must contribute positive signal.", artifact.Layout.PhasePolicyPath));
+        }
+    }
+
+    private static List<TemporalStateSummary> BuildStateSummaries(LoadedHopngArtifact artifact, IReadOnlyList<PhaseSlice> phaseSlices)
+    {
+        if (artifact.PhasePolicy is null)
+        {
+            return [];
+        }
+
+        var thresholds = artifact.PhasePolicy.StateThresholds ?? new TemporalStateThresholdPolicy();
+        var summaries = new List<TemporalStateSummary>();
+
+        for (var index = 0; index < phaseSlices.Count; index++)
+        {
+            var slice = phaseSlices[index];
+            if (slice.UniverseStates.Count == 0)
+            {
+                summaries.Add(new TemporalStateSummary
+                {
+                    SliceId = slice.PhaseSliceId,
+                    N = slice.N,
+                    StateClass = "StructurallyIncomplete",
+                    DerivedForceMagnitude = 0d,
+                    DerivedForceDirection = "neutral",
+                    BasisSignals = ["Phase slice does not declare any participating universe states."]
+                });
+                continue;
+            }
+
+            var averagePressure = slice.UniverseStates.Values.Average(state => state.Pressure);
+            var averageSignedDrift = slice.UniverseStates.Values.Average(state => state.Drift);
+            var averageAbsoluteDrift = slice.UniverseStates.Values.Average(state => Math.Abs(state.Drift));
+            var averageBloom = slice.UniverseStates.Values.Average(state => state.Bloom);
+            var hasTopologyChange = index > 0 && HasTopologyChangeBetween(artifact, phaseSlices[index - 1], slice);
+            var derivedForce = Math.Round(
+                (averagePressure * thresholds.ForcePressureWeight)
+                + (averageAbsoluteDrift * thresholds.ForceDriftWeight)
+                + (averageBloom * thresholds.ForceBloomWeight)
+                + (hasTopologyChange ? thresholds.ForceTopologyBonus : 0d),
+                6);
+            var direction = averageSignedDrift >= thresholds.DirectionDriftAbsoluteMin
+                ? "positive"
+                : averageSignedDrift <= -thresholds.DirectionDriftAbsoluteMin
+                    ? "negative"
+                    : "neutral";
+            var stateClass = ClassifyState(averagePressure, averageAbsoluteDrift, averageBloom, hasTopologyChange, thresholds);
+            var basisSignals = BuildBasisSignals(averagePressure, averageAbsoluteDrift, averageBloom, hasTopologyChange, thresholds);
+
+            summaries.Add(new TemporalStateSummary
+            {
+                SliceId = slice.PhaseSliceId,
+                N = slice.N,
+                StateClass = stateClass,
+                DerivedForceMagnitude = derivedForce,
+                DerivedForceDirection = direction,
+                BasisSignals = basisSignals
+            });
+        }
 
         return summaries;
     }
@@ -714,6 +871,163 @@ public sealed class TemporalPhaseStackService
 
         return flags.OrderBy(flag => flag, StringComparer.Ordinal).ToList();
     }
+
+    private static bool HasTopologyChangeBetween(LoadedHopngArtifact artifact, PhaseSlice prior, PhaseSlice current)
+    {
+        var priorUniverses = prior.UniverseStates.Keys.ToHashSet(StringComparer.Ordinal);
+        var currentUniverses = current.UniverseStates.Keys.ToHashSet(StringComparer.Ordinal);
+        if (!priorUniverses.SetEquals(currentUniverses))
+        {
+            return true;
+        }
+
+        var priorRelations = ResolveParticipatingRelations(artifact, priorUniverses);
+        var currentRelations = ResolveParticipatingRelations(artifact, currentUniverses);
+        if (!priorRelations.SetEquals(currentRelations))
+        {
+            return true;
+        }
+
+        var priorProjectionRules = ResolveParticipatingProjectionRules(artifact, priorUniverses);
+        var currentProjectionRules = ResolveParticipatingProjectionRules(artifact, currentUniverses);
+        return !priorProjectionRules.SetEquals(currentProjectionRules);
+    }
+
+    private static string ClassifyState(
+        double averagePressure,
+        double averageAbsoluteDrift,
+        double averageBloom,
+        bool hasTopologyChange,
+        TemporalStateThresholdPolicy thresholds) =>
+        (averagePressure, averageAbsoluteDrift, averageBloom, hasTopologyChange) switch
+        {
+            (_, _, _, true) when averagePressure >= thresholds.RupturePressureMin && averageAbsoluteDrift >= thresholds.RuptureDriftAbsoluteMin => "RuptureRisk",
+            (_, _, _, true) => "Propagating",
+            (_, _, _, false) when averagePressure >= thresholds.RupturePressureMin && averageAbsoluteDrift >= thresholds.RuptureDriftAbsoluteMin => "RuptureRisk",
+            (_, _, _, false) when averageBloom >= thresholds.PropagatingBloomMin => "Propagating",
+            (_, _, _, false) when averageAbsoluteDrift >= thresholds.DriftingAbsoluteMin => "Drifting",
+            (_, _, _, false) when averagePressure >= thresholds.RisingPressureMin => "RisingPressure",
+            _ => "Stable"
+        };
+
+    private static List<string> BuildBasisSignals(
+        double averagePressure,
+        double averageAbsoluteDrift,
+        double averageBloom,
+        bool hasTopologyChange,
+        TemporalStateThresholdPolicy thresholds)
+    {
+        var signals = new List<string>();
+
+        if (averagePressure >= thresholds.RupturePressureMin)
+        {
+            signals.Add($"Average pressure {averagePressure:F3} crossed the rupture threshold {thresholds.RupturePressureMin:F3}.");
+        }
+        else if (averagePressure >= thresholds.RisingPressureMin)
+        {
+            signals.Add($"Average pressure {averagePressure:F3} crossed the rising-pressure threshold {thresholds.RisingPressureMin:F3}.");
+        }
+
+        if (averageAbsoluteDrift >= thresholds.RuptureDriftAbsoluteMin)
+        {
+            signals.Add($"Average absolute drift {averageAbsoluteDrift:F3} crossed the rupture threshold {thresholds.RuptureDriftAbsoluteMin:F3}.");
+        }
+        else if (averageAbsoluteDrift >= thresholds.DriftingAbsoluteMin)
+        {
+            signals.Add($"Average absolute drift {averageAbsoluteDrift:F3} crossed the drifting threshold {thresholds.DriftingAbsoluteMin:F3}.");
+        }
+
+        if (averageBloom >= thresholds.PropagatingBloomMin)
+        {
+            signals.Add($"Average bloom {averageBloom:F3} crossed the propagating threshold {thresholds.PropagatingBloomMin:F3}.");
+        }
+
+        if (hasTopologyChange)
+        {
+            signals.Add("Topology participation changed across adjacent phase slices.");
+        }
+
+        if (signals.Count == 0)
+        {
+            signals.Add("Phase slice remains within the stable pressure, drift, and bloom envelope.");
+        }
+
+        return signals;
+    }
+
+    private static string BuildGroupingSummary(PhasePolicy phasePolicy) =>
+        string.Equals(phasePolicy.PhaseWindowMode, "duration_ms", StringComparison.Ordinal)
+            ? $"{phasePolicy.EventGroupingMode}:{phasePolicy.EventGroupingSizeRawSlices} raw slices -> duration_ms:{phasePolicy.PhaseWindowDurationMs} ms (max {phasePolicy.MaxPhaseWindowSpanMs} ms)"
+            : $"{phasePolicy.EventGroupingMode}:{phasePolicy.EventGroupingSizeRawSlices} raw slices -> fixed_event_count:{phasePolicy.PhaseWindowSizeEventSlices} event slices / {phasePolicy.PhaseWindowDurationMs} ms";
+
+    private static List<List<EventSlice>> BuildPhaseWindows(IReadOnlyList<EventSlice> eventSlices, PhasePolicy phasePolicy)
+    {
+        if (string.Equals(phasePolicy.PhaseWindowMode, "fixed_event_count", StringComparison.Ordinal))
+        {
+            return BuildFixedEventCountWindows(eventSlices, phasePolicy.PhaseWindowSizeEventSlices);
+        }
+
+        if (string.Equals(phasePolicy.PhaseWindowMode, "duration_ms", StringComparison.Ordinal))
+        {
+            return BuildDurationWindows(eventSlices, phasePolicy.PhaseWindowDurationMs, phasePolicy.MaxPhaseWindowSpanMs);
+        }
+
+        return [];
+    }
+
+    private static List<List<EventSlice>> BuildFixedEventCountWindows(IReadOnlyList<EventSlice> eventSlices, int windowSize)
+    {
+        if (windowSize <= 0 || eventSlices.Count < windowSize)
+        {
+            return [];
+        }
+
+        var windows = new List<List<EventSlice>>();
+        for (var index = windowSize - 1; index < eventSlices.Count; index++)
+        {
+            windows.Add(eventSlices
+                .Skip(index - windowSize + 1)
+                .Take(windowSize)
+                .ToList());
+        }
+
+        return windows;
+    }
+
+    private static List<List<EventSlice>> BuildDurationWindows(IReadOnlyList<EventSlice> eventSlices, int targetDurationMs, int maxSpanMs)
+    {
+        if (targetDurationMs <= 0 || maxSpanMs <= 0 || eventSlices.Count == 0)
+        {
+            return [];
+        }
+
+        var windows = new List<List<EventSlice>>();
+        for (var endIndex = 0; endIndex < eventSlices.Count; endIndex++)
+        {
+            for (var startIndex = endIndex; startIndex >= 0; startIndex--)
+            {
+                var spanMs = GetTimestampSpanMs(eventSlices[startIndex].TimestampStartUtc, eventSlices[endIndex].TimestampEndUtc);
+                if (spanMs > maxSpanMs)
+                {
+                    break;
+                }
+
+                if (spanMs == targetDurationMs)
+                {
+                    windows.Add(eventSlices
+                        .Skip(startIndex)
+                        .Take(endIndex - startIndex + 1)
+                        .ToList());
+                    break;
+                }
+            }
+        }
+
+        return windows;
+    }
+
+    private static int GetTimestampSpanMs(DateTimeOffset start, DateTimeOffset end) =>
+        checked((int)Math.Round((end - start).TotalMilliseconds, MidpointRounding.AwayFromZero));
 
     private static HashSet<string> ResolveParticipatingRelations(LoadedHopngArtifact artifact, HashSet<string> participatingUniverses) =>
         (artifact.GluingManifest?.Relations ?? [])
