@@ -90,7 +90,7 @@ public static class SchemaCatalog
                 "Hdt.Schemas.Schemas.oan.hopng_phase_policy.v0.1.0.json",
                 true,
                 3,
-                ["schema", "schemaVersion", "artifactId", "rawCadenceMs", "eventGroupingMode", "eventGroupingSizeRawSlices", "phaseWindowMode", "phaseWindowSizeEventSlices", "phaseWindowDurationMs", "maxPhaseWindowSpanMs", "comparisonHorizonRawSlices", "aggregationPolicies", "stateThresholds", "primeSafeInspectionMode", "privilegedInspectionMode"]),
+                ["schema", "schemaVersion", "artifactId", "rawCadenceMs", "eventGroupingMode", "eventGroupingSizeRawSlices", "phaseWindowMode", "phaseWindowSizeEventSlices", "phaseWindowDurationMs", "maxPhaseWindowSpanMs", "comparisonHorizonRawSlices", "comparisonHorizons", "aggregationPolicies", "stateThresholds", "primeSafeInspectionMode", "privilegedInspectionMode"]),
             [BuildKey("oan.hopng_optical_channels", "0.1.0")] = new(
                 "oan.hopng_optical_channels",
                 "0.1.0",

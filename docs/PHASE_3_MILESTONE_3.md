@@ -1,8 +1,10 @@
 # Phase 3 Milestone 3: Cross-Artifact Temporal Comparison
 
-Phase 3 Milestone 3 extends temporal analysis from one lawful artifact to governed comparison between multiple lawful artifacts. This milestone should happen only after Milestones 1 and 2 are stable enough that single-artifact temporal semantics are no longer moving targets.
+Phase 3 Milestone 3 extends temporal analysis from one lawful artifact to governed comparison between multiple lawful artifacts. This milestone only became lawful after Milestones 1 and 2 stabilized enough that single-artifact temporal semantics were no longer moving targets.
 
 The purpose of this milestone is not visual comparison. It is lawful temporal comparison grounded in explicit observed-set basis, temporal policy, and relational provenance.
+
+Milestone 3 is implemented and now forms part of the approved single-clock Phase 3 release baseline as of March 30, 2026 through `compare-phase-stacks` and the committed `phase3-sample` / `phase3-peer-sample` / `phase3-divergent-peer` / `phase3-incompatible-basis` comparison corpus. Further maintenance can focus on richer comparison diagnostics and additional lawful or unlawful comparison corpora.
 
 ## Intent
 
@@ -59,6 +61,7 @@ Supporting metrics:
 - drift delta
 - topology delta
 - derived force delta
+- state-rank delta
 - similarity score as a secondary diagnostic only
 
 ## Command Surface
@@ -73,6 +76,7 @@ The command should compare two artifacts and report:
 
 - basis alignment result
 - temporal-state compatibility
+- classification reason
 - drift and topology deltas
 - convergence or divergence classification
 - Prime-safe vs privileged output posture

@@ -8,6 +8,7 @@ public sealed class TemporalPhaseStackService
     private static readonly string[] RequiredChannels = ["pressure", "drift", "bloom"];
     private static readonly string[] ReservedChannels = ["force", "opacity", "hue", "saturation"];
     private static readonly HashSet<string> SupportedAggregationModes = ["latest", "mean", "delta"];
+    private static readonly HashSet<string> SupportedComparisonHorizonModes = ["raw_slices", "duration_ms"];
     private static readonly HashSet<ValidationErrorCode> TrustFailureCodes =
     [
         ValidationErrorCode.DigestMismatch,
@@ -91,12 +92,15 @@ public sealed class TemporalPhaseStackService
         }
 
         var observedSet = artifact.EventSliceSet.ObservedSet;
+        var primaryHorizon = ResolvePrimaryComparisonHorizon(artifact.PhasePolicy, rawSliceHorizon);
+        var renderedHorizons = BuildRenderedHorizons(artifact.PhasePolicy, primaryHorizon);
         var expectedPhaseSlices = DeriveExpectedPhaseSlices(artifact);
         var coverage = HasRequiredChannelCoverage(artifact.EventSliceSet, artifact.OpticalChannelsDefinition);
         var sliceSummaries = BuildSliceSummaries(artifact.EventSliceSet, artifact.PhaseSliceSet);
-        var stateSummaries = BuildStateSummaries(artifact, artifact.PhaseSliceSet.Slices);
-        var driftFlags = BuildDriftFlags(artifact.PhaseSliceSet.Slices, horizon, issues);
-        var topologyFlags = BuildTopologyFlags(artifact, artifact.PhaseSliceSet.Slices);
+        var stateSummaries = BuildStateSummaries(artifact, artifact.PhaseSliceSet.Slices, primaryHorizon);
+        var horizonSummaries = BuildHorizonSummaries(artifact, artifact.PhaseSliceSet.Slices, renderedHorizons);
+        var driftFlags = BuildDriftFlags(artifact.PhaseSliceSet.Slices, horizonSummaries);
+        var topologyFlags = BuildTopologyFlags(artifact, artifact.PhaseSliceSet.Slices, horizonSummaries);
         var eventIssues = ValidateTemporalContracts(artifact)
             .Select(issue => issue.Message)
             .Distinct(StringComparer.Ordinal)
@@ -129,9 +133,11 @@ public sealed class TemporalPhaseStackService
             EventSliceCount = artifact.EventSliceSet.Slices.Count,
             PhaseSliceCount = artifact.PhaseSliceSet.Slices.Count,
             GroupingSummary = BuildGroupingSummary(artifact.PhasePolicy),
-            HorizonRawSlices = horizon,
-            HorizonDurationMs = horizon * artifact.PhasePolicy.RawCadenceMs,
+            PrimaryHorizonId = primaryHorizon.HorizonId,
+            HorizonRawSlices = primaryHorizon.HorizonRawSlices,
+            HorizonDurationMs = primaryHorizon.HorizonDurationMs,
             RequiredChannelCoverage = coverage,
+            HorizonSummaries = horizonSummaries,
             DriftFlags = driftFlags,
             TopologyChangeFlags = topologyFlags,
             PayloadMode = payloadMode == "privileged" ? artifact.PhasePolicy.PrivilegedInspectionMode : artifact.PhasePolicy.PrimeSafeInspectionMode,
@@ -219,6 +225,7 @@ public sealed class TemporalPhaseStackService
             return [];
         }
 
+        var primaryHorizon = ResolvePrimaryComparisonHorizon(artifact.PhasePolicy, null);
         var derived = new List<PhaseSlice>();
         foreach (var window in windows)
         {
@@ -260,8 +267,8 @@ public sealed class TemporalPhaseStackService
                 SourceEventSliceIds = window.Select(slice => slice.EventSliceId).ToList(),
                 SourceRawStartN = first.RawStartN,
                 SourceRawEndN = last.RawEndN,
-                DeltaHorizon = artifact.PhasePolicy.ComparisonHorizonRawSlices,
-                DeltaHorizonMs = artifact.PhasePolicy.ComparisonHorizonRawSlices * artifact.PhasePolicy.RawCadenceMs,
+                DeltaHorizon = primaryHorizon.HorizonRawSlices,
+                DeltaHorizonMs = primaryHorizon.HorizonDurationMs,
                 UniverseStates = universeStates
             };
 
@@ -406,6 +413,8 @@ public sealed class TemporalPhaseStackService
         {
             issues.Add(new ValidationIssue(ValidationErrorCode.InvalidPhasePolicy, "Max phase-window span must be greater than or equal to the declared phase-window duration.", artifact.Layout.PhasePolicyPath));
         }
+
+        ValidateComparisonHorizonPolicies(artifact, phasePolicy, issues);
 
         foreach (var requiredChannel in RequiredChannels)
         {
@@ -739,7 +748,61 @@ public sealed class TemporalPhaseStackService
         }
     }
 
-    private static List<TemporalStateSummary> BuildStateSummaries(LoadedHopngArtifact artifact, IReadOnlyList<PhaseSlice> phaseSlices)
+    private static void ValidateComparisonHorizonPolicies(
+        LoadedHopngArtifact artifact,
+        PhasePolicy phasePolicy,
+        List<ValidationIssue> issues)
+    {
+        if (phasePolicy.ComparisonHorizons.Count == 0)
+        {
+            return;
+        }
+
+        var seenIds = new HashSet<string>(StringComparer.Ordinal);
+        var classificationHorizonCount = phasePolicy.ComparisonHorizons.Count(horizon => horizon.UseForStateClassification);
+
+        foreach (var horizon in phasePolicy.ComparisonHorizons)
+        {
+            if (string.IsNullOrWhiteSpace(horizon.HorizonId) || !seenIds.Add(horizon.HorizonId))
+            {
+                issues.Add(new ValidationIssue(ValidationErrorCode.InvalidPhasePolicy, "Comparison horizons must declare unique horizon ids.", artifact.Layout.PhasePolicyPath));
+            }
+
+            if (!SupportedComparisonHorizonModes.Contains(horizon.Mode))
+            {
+                issues.Add(new ValidationIssue(ValidationErrorCode.InvalidPhasePolicy, $"Comparison horizon '{horizon.HorizonId}' must use raw_slices or duration_ms mode.", artifact.Layout.PhasePolicyPath));
+            }
+
+            if (horizon.Value <= 0)
+            {
+                issues.Add(new ValidationIssue(ValidationErrorCode.InvalidPhasePolicy, $"Comparison horizon '{horizon.HorizonId}' must declare a positive value.", artifact.Layout.PhasePolicyPath));
+            }
+
+            if (string.Equals(horizon.Mode, "duration_ms", StringComparison.Ordinal)
+                && (phasePolicy.RawCadenceMs <= 0 || horizon.Value % phasePolicy.RawCadenceMs != 0))
+            {
+                issues.Add(new ValidationIssue(ValidationErrorCode.InvalidPhasePolicy, $"Comparison horizon '{horizon.HorizonId}' duration_ms value must divide evenly by the raw cadence.", artifact.Layout.PhasePolicyPath));
+            }
+        }
+
+        if (classificationHorizonCount != 1)
+        {
+            issues.Add(new ValidationIssue(ValidationErrorCode.InvalidPhasePolicy, "Explicit comparison horizons must declare exactly one state-classification horizon.", artifact.Layout.PhasePolicyPath));
+            return;
+        }
+
+        var primaryHorizon = phasePolicy.ComparisonHorizons.First(horizon => horizon.UseForStateClassification);
+        if (!TryResolveComparisonHorizon(phasePolicy, primaryHorizon, out var resolvedPrimary)
+            || resolvedPrimary.HorizonRawSlices != phasePolicy.ComparisonHorizonRawSlices)
+        {
+            issues.Add(new ValidationIssue(ValidationErrorCode.InvalidPhasePolicy, "comparisonHorizonRawSlices must match the raw-slice basis of the primary comparison horizon.", artifact.Layout.PhasePolicyPath));
+        }
+    }
+
+    private static List<TemporalStateSummary> BuildStateSummaries(
+        LoadedHopngArtifact artifact,
+        IReadOnlyList<PhaseSlice> phaseSlices,
+        ResolvedComparisonHorizon primaryHorizon)
     {
         if (artifact.PhasePolicy is null)
         {
@@ -766,30 +829,36 @@ public sealed class TemporalPhaseStackService
                 continue;
             }
 
-            var averagePressure = slice.UniverseStates.Values.Average(state => state.Pressure);
-            var averageSignedDrift = slice.UniverseStates.Values.Average(state => state.Drift);
-            var averageAbsoluteDrift = slice.UniverseStates.Values.Average(state => Math.Abs(state.Drift));
-            var averageBloom = slice.UniverseStates.Values.Average(state => state.Bloom);
-            var hasTopologyChange = index > 0 && HasTopologyChangeBetween(artifact, phaseSlices[index - 1], slice);
+            var metrics = BuildSliceMetrics(slice);
+            var anchor = ResolveHorizonAnchor(phaseSlices, index, primaryHorizon);
+            var anchorMetrics = anchor is null ? null : BuildSliceMetrics(anchor);
+            var fallbackAdjacent = anchor is null && index > 0 ? phaseSlices[index - 1] : null;
+            var topologyReference = anchor ?? fallbackAdjacent;
+            var hasTopologyChange = topologyReference is not null && HasTopologyChangeBetween(artifact, topologyReference, slice);
+            var directionBasis = anchorMetrics is null
+                ? metrics.AverageSignedDrift
+                : metrics.AverageSignedDrift - anchorMetrics.AverageSignedDrift;
             var derivedForce = Math.Round(
-                (averagePressure * thresholds.ForcePressureWeight)
-                + (averageAbsoluteDrift * thresholds.ForceDriftWeight)
-                + (averageBloom * thresholds.ForceBloomWeight)
+                (metrics.AveragePressure * thresholds.ForcePressureWeight)
+                + (metrics.AverageAbsoluteDrift * thresholds.ForceDriftWeight)
+                + (metrics.AverageBloom * thresholds.ForceBloomWeight)
                 + (hasTopologyChange ? thresholds.ForceTopologyBonus : 0d),
                 6);
-            var direction = averageSignedDrift >= thresholds.DirectionDriftAbsoluteMin
+            var direction = directionBasis >= thresholds.DirectionDriftAbsoluteMin
                 ? "positive"
-                : averageSignedDrift <= -thresholds.DirectionDriftAbsoluteMin
+                : directionBasis <= -thresholds.DirectionDriftAbsoluteMin
                     ? "negative"
                     : "neutral";
-            var stateClass = ClassifyState(averagePressure, averageAbsoluteDrift, averageBloom, hasTopologyChange, thresholds);
-            var basisSignals = BuildBasisSignals(averagePressure, averageAbsoluteDrift, averageBloom, hasTopologyChange, thresholds);
+            var stateClass = ClassifyState(metrics.AveragePressure, metrics.AverageAbsoluteDrift, metrics.AverageBloom, hasTopologyChange, thresholds);
+            var basisSignals = BuildBasisSignals(metrics, hasTopologyChange, thresholds, primaryHorizon, anchor, anchorMetrics, fallbackAdjacent is not null);
 
             summaries.Add(new TemporalStateSummary
             {
                 SliceId = slice.PhaseSliceId,
                 N = slice.N,
                 StateClass = stateClass,
+                ComparisonHorizonId = primaryHorizon.HorizonId,
+                AnchorSliceId = anchor?.PhaseSliceId ?? string.Empty,
                 DerivedForceMagnitude = derivedForce,
                 DerivedForceDirection = direction,
                 BasisSignals = basisSignals
@@ -799,29 +868,70 @@ public sealed class TemporalPhaseStackService
         return summaries;
     }
 
-    private static List<string> BuildDriftFlags(IReadOnlyList<PhaseSlice> phaseSlices, int rawSliceHorizon, List<string> issues)
+    private static List<TemporalHorizonSummary> BuildHorizonSummaries(
+        LoadedHopngArtifact artifact,
+        IReadOnlyList<PhaseSlice> phaseSlices,
+        IReadOnlyList<ResolvedComparisonHorizon> horizons)
     {
-        var flags = new HashSet<string>(StringComparer.Ordinal);
-        if (phaseSlices.Count == 0)
+        if (phaseSlices.Count == 0 || horizons.Count == 0)
         {
             return [];
         }
 
+        var summaries = new List<TemporalHorizonSummary>();
+        foreach (var horizon in horizons)
+        {
+            var driftFlags = new HashSet<string>(StringComparer.Ordinal);
+            var topologyFlags = new HashSet<string>(StringComparer.Ordinal);
+            var missingAnchorSliceIds = new List<string>();
+            var comparableSliceCount = 0;
+
+            for (var index = 1; index < phaseSlices.Count; index++)
+            {
+                var current = phaseSlices[index];
+                var anchor = ResolveHorizonAnchor(phaseSlices, index, horizon);
+                if (anchor is null)
+                {
+                    missingAnchorSliceIds.Add(current.PhaseSliceId);
+                    continue;
+                }
+
+                comparableSliceCount++;
+                AddDriftFlags(anchor, current, $"horizon:{horizon.HorizonId}", driftFlags);
+                AddTopologyFlags(artifact, anchor, current, $"horizon:{horizon.HorizonId}", topologyFlags);
+            }
+
+            summaries.Add(new TemporalHorizonSummary
+            {
+                HorizonId = horizon.HorizonId,
+                Mode = horizon.Mode,
+                Value = horizon.Value,
+                HorizonRawSlices = horizon.HorizonRawSlices,
+                HorizonDurationMs = horizon.HorizonDurationMs,
+                UseForStateClassification = horizon.UseForStateClassification,
+                ComparableSliceCount = comparableSliceCount,
+                MissingAnchorSliceIds = missingAnchorSliceIds,
+                DriftFlags = driftFlags.OrderBy(flag => flag, StringComparer.Ordinal).ToList(),
+                TopologyFlags = topologyFlags.OrderBy(flag => flag, StringComparer.Ordinal).ToList()
+            });
+        }
+
+        return summaries;
+    }
+
+    private static List<string> BuildDriftFlags(
+        IReadOnlyList<PhaseSlice> phaseSlices,
+        IReadOnlyList<TemporalHorizonSummary> horizonSummaries)
+    {
+        var flags = new HashSet<string>(StringComparer.Ordinal);
         for (var index = 1; index < phaseSlices.Count; index++)
         {
             AddDriftFlags(phaseSlices[index - 1], phaseSlices[index], "adjacent", flags);
+        }
 
-            var horizonAnchor = phaseSlices
-                .Take(index)
-                .LastOrDefault(candidate => rawSliceHorizon > 0 && phaseSlices[index].SourceRawEndN - candidate.SourceRawEndN >= rawSliceHorizon);
-            if (rawSliceHorizon > 0 && horizonAnchor is null)
-            {
-                issues.Add($"Phase slice '{phaseSlices[index].PhaseSliceId}' does not yet have a prior slice that satisfies raw horizon {rawSliceHorizon}.");
-            }
-            else if (horizonAnchor is not null)
-            {
-                AddDriftFlags(horizonAnchor, phaseSlices[index], $"h={rawSliceHorizon}", flags);
-            }
+        foreach (var horizonSummary in horizonSummaries)
+        {
+            flags.UnionWith(horizonSummary.DriftFlags);
         }
 
         return flags.OrderBy(flag => flag, StringComparer.Ordinal).ToList();
@@ -839,37 +949,54 @@ public sealed class TemporalPhaseStackService
         }
     }
 
-    private static List<string> BuildTopologyFlags(LoadedHopngArtifact artifact, IReadOnlyList<PhaseSlice> phaseSlices)
+    private static List<string> BuildTopologyFlags(
+        LoadedHopngArtifact artifact,
+        IReadOnlyList<PhaseSlice> phaseSlices,
+        IReadOnlyList<TemporalHorizonSummary> horizonSummaries)
     {
         var flags = new HashSet<string>(StringComparer.Ordinal);
         for (var index = 1; index < phaseSlices.Count; index++)
         {
-            var prior = phaseSlices[index - 1];
-            var current = phaseSlices[index];
-            var priorUniverses = prior.UniverseStates.Keys.ToHashSet(StringComparer.Ordinal);
-            var currentUniverses = current.UniverseStates.Keys.ToHashSet(StringComparer.Ordinal);
+            AddTopologyFlags(artifact, phaseSlices[index - 1], phaseSlices[index], null, flags);
+        }
 
-            if (!priorUniverses.SetEquals(currentUniverses))
-            {
-                flags.Add($"Universe participation changed between phase slices '{prior.PhaseSliceId}' and '{current.PhaseSliceId}'.");
-            }
-
-            var priorRelations = ResolveParticipatingRelations(artifact, priorUniverses);
-            var currentRelations = ResolveParticipatingRelations(artifact, currentUniverses);
-            if (!priorRelations.SetEquals(currentRelations))
-            {
-                flags.Add($"Gluing participation changed between phase slices '{prior.PhaseSliceId}' and '{current.PhaseSliceId}'.");
-            }
-
-            var priorProjectionRules = ResolveParticipatingProjectionRules(artifact, priorUniverses);
-            var currentProjectionRules = ResolveParticipatingProjectionRules(artifact, currentUniverses);
-            if (!priorProjectionRules.SetEquals(currentProjectionRules))
-            {
-                flags.Add($"Projection-rule participation changed between phase slices '{prior.PhaseSliceId}' and '{current.PhaseSliceId}'.");
-            }
+        foreach (var horizonSummary in horizonSummaries)
+        {
+            flags.UnionWith(horizonSummary.TopologyFlags);
         }
 
         return flags.OrderBy(flag => flag, StringComparer.Ordinal).ToList();
+    }
+
+    private static void AddTopologyFlags(
+        LoadedHopngArtifact artifact,
+        PhaseSlice prior,
+        PhaseSlice current,
+        string? mode,
+        HashSet<string> flags)
+    {
+        var priorUniverses = prior.UniverseStates.Keys.ToHashSet(StringComparer.Ordinal);
+        var currentUniverses = current.UniverseStates.Keys.ToHashSet(StringComparer.Ordinal);
+        var suffix = string.IsNullOrWhiteSpace(mode) ? "." : $" ({mode}).";
+
+        if (!priorUniverses.SetEquals(currentUniverses))
+        {
+            flags.Add($"Universe participation changed between phase slices '{prior.PhaseSliceId}' and '{current.PhaseSliceId}'{suffix}");
+        }
+
+        var priorRelations = ResolveParticipatingRelations(artifact, priorUniverses);
+        var currentRelations = ResolveParticipatingRelations(artifact, currentUniverses);
+        if (!priorRelations.SetEquals(currentRelations))
+        {
+            flags.Add($"Gluing participation changed between phase slices '{prior.PhaseSliceId}' and '{current.PhaseSliceId}'{suffix}");
+        }
+
+        var priorProjectionRules = ResolveParticipatingProjectionRules(artifact, priorUniverses);
+        var currentProjectionRules = ResolveParticipatingProjectionRules(artifact, currentUniverses);
+        if (!priorProjectionRules.SetEquals(currentProjectionRules))
+        {
+            flags.Add($"Projection-rule participation changed between phase slices '{prior.PhaseSliceId}' and '{current.PhaseSliceId}'{suffix}");
+        }
     }
 
     private static bool HasTopologyChangeBetween(LoadedHopngArtifact artifact, PhaseSlice prior, PhaseSlice current)
@@ -911,43 +1038,70 @@ public sealed class TemporalPhaseStackService
         };
 
     private static List<string> BuildBasisSignals(
-        double averagePressure,
-        double averageAbsoluteDrift,
-        double averageBloom,
+        TemporalSliceMetrics metrics,
         bool hasTopologyChange,
-        TemporalStateThresholdPolicy thresholds)
+        TemporalStateThresholdPolicy thresholds,
+        ResolvedComparisonHorizon primaryHorizon,
+        PhaseSlice? anchor,
+        TemporalSliceMetrics? anchorMetrics,
+        bool usedAdjacentFallback)
     {
         var signals = new List<string>();
+        var stateSignalAdded = false;
 
-        if (averagePressure >= thresholds.RupturePressureMin)
+        if (anchor is not null && anchorMetrics is not null)
         {
-            signals.Add($"Average pressure {averagePressure:F3} crossed the rupture threshold {thresholds.RupturePressureMin:F3}.");
+            signals.Add($"Primary horizon '{primaryHorizon.HorizonId}' anchored on phase slice '{anchor.PhaseSliceId}' ({primaryHorizon.HorizonDurationMs} ms / {primaryHorizon.HorizonRawSlices} raw slices).");
+            AppendDeltaSignal(signals, "Average pressure", metrics.AveragePressure - anchorMetrics.AveragePressure, anchor.PhaseSliceId);
+            AppendDeltaSignal(signals, "Average signed drift", metrics.AverageSignedDrift - anchorMetrics.AverageSignedDrift, anchor.PhaseSliceId);
+            AppendDeltaSignal(signals, "Average bloom", metrics.AverageBloom - anchorMetrics.AverageBloom, anchor.PhaseSliceId);
         }
-        else if (averagePressure >= thresholds.RisingPressureMin)
+        else if (usedAdjacentFallback)
         {
-            signals.Add($"Average pressure {averagePressure:F3} crossed the rising-pressure threshold {thresholds.RisingPressureMin:F3}.");
+            signals.Add($"No prior slice satisfies primary horizon '{primaryHorizon.HorizonId}' yet; adjacent continuity remained the fallback basis.");
         }
-
-        if (averageAbsoluteDrift >= thresholds.RuptureDriftAbsoluteMin)
+        else
         {
-            signals.Add($"Average absolute drift {averageAbsoluteDrift:F3} crossed the rupture threshold {thresholds.RuptureDriftAbsoluteMin:F3}.");
-        }
-        else if (averageAbsoluteDrift >= thresholds.DriftingAbsoluteMin)
-        {
-            signals.Add($"Average absolute drift {averageAbsoluteDrift:F3} crossed the drifting threshold {thresholds.DriftingAbsoluteMin:F3}.");
+            signals.Add($"No prior slice satisfies primary horizon '{primaryHorizon.HorizonId}' yet; this slice is classified from intrinsic values only.");
         }
 
-        if (averageBloom >= thresholds.PropagatingBloomMin)
+        if (metrics.AveragePressure >= thresholds.RupturePressureMin)
         {
-            signals.Add($"Average bloom {averageBloom:F3} crossed the propagating threshold {thresholds.PropagatingBloomMin:F3}.");
+            signals.Add($"Average pressure {metrics.AveragePressure:F3} crossed the rupture threshold {thresholds.RupturePressureMin:F3}.");
+            stateSignalAdded = true;
+        }
+        else if (metrics.AveragePressure >= thresholds.RisingPressureMin)
+        {
+            signals.Add($"Average pressure {metrics.AveragePressure:F3} crossed the rising-pressure threshold {thresholds.RisingPressureMin:F3}.");
+            stateSignalAdded = true;
+        }
+
+        if (metrics.AverageAbsoluteDrift >= thresholds.RuptureDriftAbsoluteMin)
+        {
+            signals.Add($"Average absolute drift {metrics.AverageAbsoluteDrift:F3} crossed the rupture threshold {thresholds.RuptureDriftAbsoluteMin:F3}.");
+            stateSignalAdded = true;
+        }
+        else if (metrics.AverageAbsoluteDrift >= thresholds.DriftingAbsoluteMin)
+        {
+            signals.Add($"Average absolute drift {metrics.AverageAbsoluteDrift:F3} crossed the drifting threshold {thresholds.DriftingAbsoluteMin:F3}.");
+            stateSignalAdded = true;
+        }
+
+        if (metrics.AverageBloom >= thresholds.PropagatingBloomMin)
+        {
+            signals.Add($"Average bloom {metrics.AverageBloom:F3} crossed the propagating threshold {thresholds.PropagatingBloomMin:F3}.");
+            stateSignalAdded = true;
         }
 
         if (hasTopologyChange)
         {
-            signals.Add("Topology participation changed across adjacent phase slices.");
+            signals.Add(anchor is null
+                ? "Topology participation changed across adjacent phase slices."
+                : $"Topology participation changed across primary horizon '{primaryHorizon.HorizonId}'.");
+            stateSignalAdded = true;
         }
 
-        if (signals.Count == 0)
+        if (!stateSignalAdded)
         {
             signals.Add("Phase slice remains within the stable pressure, drift, and bloom envelope.");
         }
@@ -959,6 +1113,16 @@ public sealed class TemporalPhaseStackService
         string.Equals(phasePolicy.PhaseWindowMode, "duration_ms", StringComparison.Ordinal)
             ? $"{phasePolicy.EventGroupingMode}:{phasePolicy.EventGroupingSizeRawSlices} raw slices -> duration_ms:{phasePolicy.PhaseWindowDurationMs} ms (max {phasePolicy.MaxPhaseWindowSpanMs} ms)"
             : $"{phasePolicy.EventGroupingMode}:{phasePolicy.EventGroupingSizeRawSlices} raw slices -> fixed_event_count:{phasePolicy.PhaseWindowSizeEventSlices} event slices / {phasePolicy.PhaseWindowDurationMs} ms";
+
+    private static List<ResolvedComparisonHorizon> BuildRenderedHorizons(
+        PhasePolicy phasePolicy,
+        ResolvedComparisonHorizon primaryHorizon)
+    {
+        var horizons = ResolveComparisonHorizons(phasePolicy);
+        var rendered = new List<ResolvedComparisonHorizon> { primaryHorizon };
+        rendered.AddRange(horizons.Where(horizon => !string.Equals(horizon.HorizonId, primaryHorizon.HorizonId, StringComparison.Ordinal)));
+        return rendered;
+    }
 
     private static List<List<EventSlice>> BuildPhaseWindows(IReadOnlyList<EventSlice> eventSlices, PhasePolicy phasePolicy)
     {
@@ -1029,6 +1193,141 @@ public sealed class TemporalPhaseStackService
     private static int GetTimestampSpanMs(DateTimeOffset start, DateTimeOffset end) =>
         checked((int)Math.Round((end - start).TotalMilliseconds, MidpointRounding.AwayFromZero));
 
+    private static ResolvedComparisonHorizon ResolvePrimaryComparisonHorizon(PhasePolicy phasePolicy, int? rawSliceHorizon)
+    {
+        if (rawSliceHorizon is > 0)
+        {
+            return new ResolvedComparisonHorizon
+            {
+                HorizonId = "cli-raw-horizon",
+                Mode = "raw_slices",
+                Value = rawSliceHorizon.Value,
+                HorizonRawSlices = rawSliceHorizon.Value,
+                HorizonDurationMs = rawSliceHorizon.Value * Math.Max(phasePolicy.RawCadenceMs, 1),
+                UseForStateClassification = true
+            };
+        }
+
+        var horizons = ResolveComparisonHorizons(phasePolicy);
+        return horizons.FirstOrDefault(horizon => horizon.UseForStateClassification) ?? horizons[0];
+    }
+
+    private static List<ResolvedComparisonHorizon> ResolveComparisonHorizons(PhasePolicy phasePolicy)
+    {
+        if (phasePolicy.ComparisonHorizons.Count == 0)
+        {
+            return [BuildLegacyRawHorizon(phasePolicy)];
+        }
+
+        var horizons = phasePolicy.ComparisonHorizons
+            .Select(horizon => TryResolveComparisonHorizon(phasePolicy, horizon, out var resolved) ? resolved : null)
+            .Where(horizon => horizon is not null)
+            .Cast<ResolvedComparisonHorizon>()
+            .ToList();
+
+        return horizons.Count > 0 ? horizons : [BuildLegacyRawHorizon(phasePolicy)];
+    }
+
+    private static ResolvedComparisonHorizon BuildLegacyRawHorizon(PhasePolicy phasePolicy)
+    {
+        var cadenceMs = Math.Max(phasePolicy.RawCadenceMs, 1);
+        var rawSlices = Math.Max(phasePolicy.ComparisonHorizonRawSlices, 0);
+
+        return new ResolvedComparisonHorizon
+        {
+            HorizonId = "policy-raw-horizon",
+            Mode = "raw_slices",
+            Value = rawSlices,
+            HorizonRawSlices = rawSlices,
+            HorizonDurationMs = rawSlices * cadenceMs,
+            UseForStateClassification = true
+        };
+    }
+
+    private static bool TryResolveComparisonHorizon(
+        PhasePolicy phasePolicy,
+        TemporalComparisonHorizonPolicy horizon,
+        out ResolvedComparisonHorizon resolved)
+    {
+        resolved = default!;
+        if (string.IsNullOrWhiteSpace(horizon.HorizonId) || horizon.Value <= 0)
+        {
+            return false;
+        }
+
+        if (string.Equals(horizon.Mode, "raw_slices", StringComparison.Ordinal))
+        {
+            resolved = new ResolvedComparisonHorizon
+            {
+                HorizonId = horizon.HorizonId,
+                Mode = horizon.Mode,
+                Value = horizon.Value,
+                HorizonRawSlices = horizon.Value,
+                HorizonDurationMs = horizon.Value * Math.Max(phasePolicy.RawCadenceMs, 1),
+                UseForStateClassification = horizon.UseForStateClassification
+            };
+            return true;
+        }
+
+        if (string.Equals(horizon.Mode, "duration_ms", StringComparison.Ordinal)
+            && phasePolicy.RawCadenceMs > 0
+            && horizon.Value % phasePolicy.RawCadenceMs == 0)
+        {
+            resolved = new ResolvedComparisonHorizon
+            {
+                HorizonId = horizon.HorizonId,
+                Mode = horizon.Mode,
+                Value = horizon.Value,
+                HorizonRawSlices = horizon.Value / phasePolicy.RawCadenceMs,
+                HorizonDurationMs = horizon.Value,
+                UseForStateClassification = horizon.UseForStateClassification
+            };
+            return true;
+        }
+
+        return false;
+    }
+
+    private static PhaseSlice? ResolveHorizonAnchor(
+        IReadOnlyList<PhaseSlice> phaseSlices,
+        int currentIndex,
+        ResolvedComparisonHorizon horizon)
+    {
+        if (currentIndex <= 0 || horizon.Value <= 0)
+        {
+            return null;
+        }
+
+        var current = phaseSlices[currentIndex];
+        return phaseSlices
+            .Take(currentIndex)
+            .LastOrDefault(candidate => HorizonSatisfied(candidate, current, horizon));
+    }
+
+    private static bool HorizonSatisfied(PhaseSlice anchor, PhaseSlice current, ResolvedComparisonHorizon horizon) =>
+        string.Equals(horizon.Mode, "duration_ms", StringComparison.Ordinal)
+            ? GetTimestampSpanMs(anchor.TimestampEndUtc, current.TimestampEndUtc) >= horizon.HorizonDurationMs
+            : current.SourceRawEndN - anchor.SourceRawEndN >= horizon.HorizonRawSlices;
+
+    private static TemporalSliceMetrics BuildSliceMetrics(PhaseSlice slice) =>
+        new()
+        {
+            AveragePressure = slice.UniverseStates.Values.Average(state => state.Pressure),
+            AverageSignedDrift = slice.UniverseStates.Values.Average(state => state.Drift),
+            AverageAbsoluteDrift = slice.UniverseStates.Values.Average(state => Math.Abs(state.Drift)),
+            AverageBloom = slice.UniverseStates.Values.Average(state => state.Bloom)
+        };
+
+    private static void AppendDeltaSignal(List<string> signals, string label, double delta, string anchorSliceId)
+    {
+        if (Math.Abs(delta) <= 0d)
+        {
+            return;
+        }
+
+        signals.Add($"{label} changed by {delta:+0.000;-0.000;0.000} since anchor '{anchorSliceId}'.");
+    }
+
     private static HashSet<string> ResolveParticipatingRelations(LoadedHopngArtifact artifact, HashSet<string> participatingUniverses) =>
         (artifact.GluingManifest?.Relations ?? [])
             .Where(relation => participatingUniverses.Contains(relation.SourceUniverseId) && participatingUniverses.Contains(relation.TargetUniverseId))
@@ -1052,5 +1351,23 @@ public sealed class TemporalPhaseStackService
         {
             issues.Add(new ValidationIssue(ValidationErrorCode.InvalidEventSlice, "Protected evidence references must declare a digest.", path));
         }
+    }
+
+    private sealed record ResolvedComparisonHorizon
+    {
+        public string HorizonId { get; init; } = string.Empty;
+        public string Mode { get; init; } = string.Empty;
+        public int Value { get; init; }
+        public int HorizonRawSlices { get; init; }
+        public int HorizonDurationMs { get; init; }
+        public bool UseForStateClassification { get; init; }
+    }
+
+    private sealed record TemporalSliceMetrics
+    {
+        public double AveragePressure { get; init; }
+        public double AverageSignedDrift { get; init; }
+        public double AverageAbsoluteDrift { get; init; }
+        public double AverageBloom { get; init; }
     }
 }

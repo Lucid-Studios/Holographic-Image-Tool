@@ -19,10 +19,10 @@ public static class Phase3ArtifactFactory
             {
                 ObservedSetId = $"{artifact.Manifest.ArtifactId}-observed",
                 ArtifactId = artifact.Manifest.ArtifactId,
-                ObservedDurationMs = 30000,
+                ObservedDurationMs = 40000,
                 BaseSliceCadenceMs = 1000,
-                RawSliceCount = 30,
-                ObservedEventCount = 300,
+                RawSliceCount = 40,
+                ObservedEventCount = 420,
                 EventGroupingMode = "fixed_raw_count",
                 EventGroupingSizeRawSlices = 10,
                 PrimeSafeInspectionMode = "metadata_only",
@@ -36,7 +36,8 @@ public static class Phase3ArtifactFactory
             [
                 EventSlice(artifact.Manifest.ArtifactId, 0, "event-0", 0, 9, 120, 0.20, 0.10, 0.40, 0.30, 0.20, 0.50),
                 EventSlice(artifact.Manifest.ArtifactId, 1, "event-1", 10, 19, 90, 0.45, 0.30, 0.70, 0.10, 0.10, 0.40),
-                EventSlice(artifact.Manifest.ArtifactId, 2, "event-2", 20, 29, 90, 0.50, 0.35, 0.90, 0.40, 0.30, 0.65)
+                EventSlice(artifact.Manifest.ArtifactId, 2, "event-2", 20, 29, 100, 0.50, 0.35, 0.90, 0.40, 0.30, 0.65),
+                EventSlice(artifact.Manifest.ArtifactId, 3, "event-3", 30, 39, 110, 0.38, 0.15, 0.60, 0.55, 0.40, 0.80)
             ]
         };
 
@@ -50,7 +51,24 @@ public static class Phase3ArtifactFactory
             PhaseWindowSizeEventSlices = 2,
             PhaseWindowDurationMs = 20000,
             MaxPhaseWindowSpanMs = 20000,
-            ComparisonHorizonRawSlices = 10,
+            ComparisonHorizonRawSlices = 20,
+            ComparisonHorizons =
+            [
+                new TemporalComparisonHorizonPolicy
+                {
+                    HorizonId = "adjacent-raw-10",
+                    Mode = "raw_slices",
+                    Value = 10,
+                    UseForStateClassification = false
+                },
+                new TemporalComparisonHorizonPolicy
+                {
+                    HorizonId = "widened-duration-20000",
+                    Mode = "duration_ms",
+                    Value = 20000,
+                    UseForStateClassification = true
+                }
+            ],
             AggregationPolicies = new Dictionary<string, string>(StringComparer.Ordinal)
             {
                 ["pressure"] = "mean",
@@ -123,6 +141,74 @@ public static class Phase3ArtifactFactory
         return Phase2ArtifactFactory.RefreshIntegrity(artifact);
     }
 
+    public static LoadedHopngArtifact CreateDelayedPeer(string tempDir, string name)
+    {
+        var artifact = CreateValid(tempDir, name);
+        var refreshed = new HopngArtifactLoader().Load(artifact.Layout.ManifestPath);
+        var eventSliceSet = refreshed.EventSliceSet!;
+        eventSliceSet = ReplaceLastEventSliceStates(
+            eventSliceSet,
+            0.42, 0.45, 0.80,
+            0.55, 0.50, 0.85);
+
+        new ArtifactJsonStore().WriteCanonical(refreshed.Layout.EventSlicePath, eventSliceSet);
+        refreshed = Phase2ArtifactFactory.RefreshIntegrity(refreshed);
+        var phaseSliceSet = new PhaseSliceSet
+        {
+            ArtifactId = refreshed.Manifest.ArtifactId,
+            Slices = new TemporalPhaseStackService().DeriveExpectedPhaseSlices(refreshed)
+        };
+
+        new ArtifactJsonStore().WriteCanonical(refreshed.Layout.PhaseSlicePath, phaseSliceSet);
+        return Phase2ArtifactFactory.RefreshIntegrity(refreshed);
+    }
+
+    public static LoadedHopngArtifact CreateDivergentPeer(string tempDir, string name)
+    {
+        var artifact = CreateValid(tempDir, name);
+        var refreshed = new HopngArtifactLoader().Load(artifact.Layout.ManifestPath);
+        var eventSliceSet = refreshed.EventSliceSet!;
+        eventSliceSet = ReplaceLastEventSliceStates(
+            eventSliceSet,
+            0.62, 0.70, 0.95,
+            0.75, 0.65, 0.95);
+
+        new ArtifactJsonStore().WriteCanonical(refreshed.Layout.EventSlicePath, eventSliceSet);
+        refreshed = Phase2ArtifactFactory.RefreshIntegrity(refreshed);
+        var phaseSliceSet = new PhaseSliceSet
+        {
+            ArtifactId = refreshed.Manifest.ArtifactId,
+            Slices = new TemporalPhaseStackService().DeriveExpectedPhaseSlices(refreshed)
+        };
+
+        new ArtifactJsonStore().WriteCanonical(refreshed.Layout.PhaseSlicePath, phaseSliceSet);
+        return Phase2ArtifactFactory.RefreshIntegrity(refreshed);
+    }
+
+    public static LoadedHopngArtifact CreateIncompatiblePrimaryHorizon(string tempDir, string name)
+    {
+        var artifact = CreateValid(tempDir, name);
+        JsonFile.Mutate(artifact.Layout.PhasePolicyPath, json =>
+        {
+            json["comparisonHorizonRawSlices"] = 10;
+            var horizons = json["comparisonHorizons"]!.AsArray();
+            horizons[0]!["useForStateClassification"] = true;
+            horizons[1]!["useForStateClassification"] = false;
+        });
+
+        artifact = Phase2ArtifactFactory.RefreshIntegrity(artifact);
+
+        var refreshed = new HopngArtifactLoader().Load(artifact.Layout.ManifestPath);
+        var phaseSliceSet = new PhaseSliceSet
+        {
+            ArtifactId = refreshed.Manifest.ArtifactId,
+            Slices = new TemporalPhaseStackService().DeriveExpectedPhaseSlices(refreshed)
+        };
+
+        new ArtifactJsonStore().WriteCanonical(refreshed.Layout.PhaseSlicePath, phaseSliceSet);
+        return Phase2ArtifactFactory.RefreshIntegrity(refreshed);
+    }
+
     private static EventSlice EventSlice(
         string artifactId,
         int n,
@@ -172,6 +258,49 @@ public static class Phase3ArtifactFactory
         return slice with
         {
             SliceDigest = TemporalSliceDigestService.ComputeEventSliceDigest(slice)
+        };
+    }
+
+    private static EventSliceSet ReplaceLastEventSliceStates(
+        EventSliceSet eventSliceSet,
+        double primePressure,
+        double primeDrift,
+        double primeBloom,
+        double crypticPressure,
+        double crypticDrift,
+        double crypticBloom)
+    {
+        var slices = eventSliceSet.Slices.ToList();
+        var lastSlice = slices[^1];
+        var universeStates = new Dictionary<string, TemporalUniverseState>(lastSlice.UniverseStates, StringComparer.Ordinal)
+        {
+            ["prime-projection"] = new TemporalUniverseState
+            {
+                Pressure = primePressure,
+                Drift = primeDrift,
+                Bloom = primeBloom
+            },
+            ["cryptic-support"] = new TemporalUniverseState
+            {
+                Pressure = crypticPressure,
+                Drift = crypticDrift,
+                Bloom = crypticBloom
+            }
+        };
+
+        var peerSlice = lastSlice with
+        {
+            UniverseStates = universeStates
+        };
+        peerSlice = peerSlice with
+        {
+            SliceDigest = TemporalSliceDigestService.ComputeEventSliceDigest(peerSlice)
+        };
+
+        slices[^1] = peerSlice;
+        return eventSliceSet with
+        {
+            Slices = slices
         };
     }
 

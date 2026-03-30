@@ -2,6 +2,14 @@
 
 This document is the execution-oriented companion to [`PHASE_ROADMAP.md`](./PHASE_ROADMAP.md). The roadmap defines what each phase means. This backlog defines what remains to be built in practical terms.
 
+## Current Execution Topology
+
+- active main lane: post-release maintenance of the approved Phase 3 single-clock temporal operator surface
+- active promotion-prep lane: validator-first promotion prep for Phase 3 Milestone 4 without carrier-first implementation
+- promoted doctrine: operator cascade governance, honest substrate principles, and the `.hogif` planning stack now constrain future work even though they are not active carrier implementation
+- deferred research lane: Phase 3 Milestone 4 heterochronous continuity research, validator-first examples, and promotion criteria
+- blocked later lanes: Phases 4 through 6 remain downstream of the stabilized Phase 3 release baseline and later promotion of stable identity-morphism and async-channel rules
+
 ## Phase 1: Trusted Artifact Existence
 
 ### Status
@@ -30,22 +38,17 @@ Implemented.
 
 ### Status
 
-Implemented, entering release hardening.
+Implemented and maintained as a stable baseline.
 
 ### Goal
 
 Move from isolated trusted artifacts to governed relation between coordinate-bound universes and artifacts.
 
-### Backlog
+### Maintenance Work
 
-- implement `oan.hopng_universe_layer.v0.1.0.json`
-- implement `oan.hopng_gluing_manifest.v0.1.0.json`
-- implement `oan.hopng_projection_rules.v0.1.0.json`
-- implement `oan.hopng_legibility_profile.v0.1.0.json`
-- extend the schema registry and validation engine to recognize and validate Phase 2 sidecars
-- add lawful gluing checks before any rendering or merge pipeline
-- add counterfeit-vs-formed comparison foundations tied to gluing provenance
-- add Phase 2 CLI or reserved-command upgrades only when the underlying contracts are real
+- keep Phase 2 wrappers, docs, and smoke paths aligned with the still-supported relational baseline
+- preserve clean committed Phase 1 and Phase 2 reference artifacts
+- keep formed-vs-flattened comparison behavior deterministic as later phases advance
 
 ### Planned First Slice
 
@@ -55,13 +58,9 @@ See [`PHASE_2_MILESTONE_1.md`](./PHASE_2_MILESTONE_1.md).
 
 See [`PHASE_2_MILESTONE_2.md`](./PHASE_2_MILESTONE_2.md).
 
-### Current Hardening Work
+### Boundary
 
-- reconcile docs and operator guidance with the now-live `merge-layers` and `compare-surfaces` commands
-- keep only clean Phase 1 and Phase 2 reference artifact sets under `examples/`
-- remove committed private signing keys from reference artifacts
-- keep repo-local build, test, and smoke automation current as the operator surface expands
-- keep internal smoke paths current for Phase 2 public wrappers and Phase 3 temporal verification
+Phase 2 is no longer the active build lane. It remains a required baseline that later work must not destabilize.
 
 ### Release Gate
 
@@ -71,7 +70,7 @@ See [`PHASE_2_RELEASE_READY.md`](./PHASE_2_RELEASE_READY.md).
 
 ### Status
 
-Milestone 1 implemented; later single-clock expansion and planned heterochronous extension remain ahead.
+Milestones 1 through 3 are implemented, and the single-clock Phase 3 release baseline was approved on March 30, 2026. The heterochronous extension remains in the deferred research lane.
 
 ### Goal
 
@@ -79,17 +78,13 @@ Preserve evented change and tensor-native deltas rather than static lawful struc
 
 ### Backlog
 
-- harden the Phase 3 Milestone 1 operator surface and reference artifacts
-- expand temporal examples beyond the committed `examples/phase3-sample.*` baseline as Milestones 2 and 3 land
-- extend drift and topology diagnostics into richer temporal comparison after single-artifact semantics stabilize
-- implement duration-window and timestamp-span temporal policy support
-- implement derived `force` semantics and temporal state classification
-- implement governed cross-artifact temporal comparison after single-artifact semantics stabilize
-- define the heterochronous temporal channel doctrine before any `.hogif` carrier or async renderer work
-- define admissible identity morphism classes before `.hogif` schema or validator work
-- formalize `.hogif` excursion and re-admission governance before schema or encoder work
-- assemble a `.hogif` research corpus with lawful and unlawful excursion cases
-- harden the full Phase 3 operator surface for release readiness
+- maintain the `render-phase-stack` and `compare-phase-stacks` operator surfaces as stable released commands
+- extend lawful and unlawful temporal comparison corpora beyond the current `phase3-sample` / `phase3-peer-sample` / `phase3-divergent-peer` / `phase3-incompatible-basis` / `phase3-invalid-derived` sets
+- keep the lawful incompatible-basis comparison path artifact-backed and wrapper-backed
+- deepen human-readable operator output and explicit diagnostics only where the released comparison surface still leaves ambiguity
+- keep wrapper-backed smoke paths equal to the public temporal command surface
+- keep temporal docs, examples, and release records synchronized with actual behavior
+- preserve deterministic single-clock basis alignment, Prime-safe posture, and no-interpolation guarantees as post-release diagnostics deepen
 
 ### Implemented Milestone 1
 
@@ -106,10 +101,11 @@ Preserve evented change and tensor-native deltas rather than static lawful struc
 
 ### Current Boundaries
 
-- single-artifact temporal semantics only
+- single-clock temporal semantics only
 - analytic-first and custody-safe
+- cross-artifact temporal comparison exists as a released, policy-bound temporal surface
 - no interpolation or synthetic slices
-- no cross-artifact temporal comparison
+- no heterochronous carrier implementation
 - no engram, formation, OE, or Sanctuary runtime behavior
 - no aesthetic image synthesis
 
@@ -117,17 +113,27 @@ Preserve evented change and tensor-native deltas rather than static lawful struc
 
 See [`PHASE_3_MILESTONE_1.md`](./PHASE_3_MILESTONE_1.md).
 
-### Planned Milestone 2
+### Implemented Milestone 2
 
 See [`PHASE_3_MILESTONE_2.md`](./PHASE_3_MILESTONE_2.md).
 
-### Planned Milestone 3
+### Implemented Milestone 3
 
 See [`PHASE_3_MILESTONE_3.md`](./PHASE_3_MILESTONE_3.md).
 
 ### Planned Milestone 4
 
 See [`PHASE_3_MILESTONE_4.md`](./PHASE_3_MILESTONE_4.md).
+
+### Deferred Research Lane
+
+The following work remains explicitly outside the active implementation lane until the released single-clock baseline stays stable and promotion criteria are met:
+
+- `.hogif` async channel schemas
+- `.hogif` validator implementation
+- `.hogif` carrier packaging
+- async renderer or animation behavior
+- identity-bearing excursion and readmission examples beyond planning-stage reference corpora
 
 ### Release Gate
 
@@ -198,3 +204,6 @@ Bind lawful artifacts into Sanctuary and OE runtime life as governed witnesses.
 - add validation before automation that assumes lawful formation
 - prefer explicit sidecars and comparison logic over hidden or inferred semantics
 - treat Prime-safe and Cryptic boundaries as invariant across all phases
+- proceed under bounded cascade authorization during normal build execution and pause only at explicit HITL boundaries
+- do not leave implemented work stranded in planning-only documents
+- do not promote research-lane work into the main lane without explicit validation, examples, and honest maturity claims

@@ -208,7 +208,7 @@ This keeps the model honest: the hard problem is the ontology of time, not the f
 
 ## Preconditions
 
-Milestone 4 should not begin implementation work until the current single-clock Phase 3 contracts are stable enough to serve as a baseline.
+Milestone 4 should not begin implementation work until the approved single-clock Phase 3 contracts remain stable enough to serve as a baseline.
 
 That means:
 
@@ -217,7 +217,7 @@ That means:
 - Milestone 3 basis-alignment semantics must be stable enough to inform cross-channel reconciliation rules
 - admissible identity morphism classes must be stable enough to govern validator and readmission design
 
-Milestone 4 is a planned extension track. It does not redefine the current single-clock Phase 3 release gate.
+Milestone 4 is a planned extension track. It does not redefine the approved single-clock Phase 3 release baseline.
 
 ## Acceptance Criteria
 

@@ -31,6 +31,25 @@ function Invoke-HdtStep {
     }
 }
 
+function Assert-OutputContains {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Output,
+
+        [Parameter(Mandatory = $true)]
+        [string[]]$ExpectedFragments,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Context
+    )
+
+    foreach ($fragment in $ExpectedFragments) {
+        if ($Output -notlike "*$fragment*") {
+            throw "$Context did not contain expected fragment '$fragment'."
+        }
+    }
+}
+
 try {
     New-Item -ItemType Directory -Path $tempDir | Out-Null
 
@@ -52,8 +71,32 @@ try {
         & (Join-Path $repoRoot "Render-HOPNGPhaseStack.ps1") --path $manifestPath --view prime --json
     }
 
+    Invoke-HdtStep -Label "Render Phase 3 scratch artifact (prime text)" -Action {
+        $render = & (Join-Path $repoRoot "Render-HOPNGPhaseStack.ps1") --path $manifestPath --view prime
+        $renderText = ($render | Out-String).Trim()
+        $renderText
+        Assert-OutputContains -Output $renderText -ExpectedFragments @(
+            "Temporal stack status: LawfullyDerived",
+            "Final state: ",
+            "Final basis signals: ",
+            "Horizon summaries: "
+        ) -Context "Prime text render"
+    }
+
     Invoke-HdtStep -Label "Render Phase 3 scratch artifact (privileged)" -Action {
         & (Join-Path $repoRoot "Render-HOPNGPhaseStack.ps1") --path $manifestPath --view privileged --json
+    }
+
+    Invoke-HdtStep -Label "Render Phase 3 scratch artifact (privileged text)" -Action {
+        $render = & (Join-Path $repoRoot "Render-HOPNGPhaseStack.ps1") --path $manifestPath --view privileged
+        $renderText = ($render | Out-String).Trim()
+        $renderText
+        Assert-OutputContains -Output $renderText -ExpectedFragments @(
+            "Temporal stack status: LawfullyDerived",
+            "Payload mode: full_payload",
+            "Final derived force: ",
+            "Validation issues: 0"
+        ) -Context "Privileged text render"
     }
 }
 finally {

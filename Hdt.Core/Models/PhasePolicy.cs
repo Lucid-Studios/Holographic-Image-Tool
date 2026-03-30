@@ -13,10 +13,19 @@ public sealed record PhasePolicy
     public int PhaseWindowDurationMs { get; init; }
     public int MaxPhaseWindowSpanMs { get; init; }
     public int ComparisonHorizonRawSlices { get; init; }
+    public List<TemporalComparisonHorizonPolicy> ComparisonHorizons { get; init; } = [];
     public Dictionary<string, string> AggregationPolicies { get; init; } = new(StringComparer.Ordinal);
     public TemporalStateThresholdPolicy? StateThresholds { get; init; }
     public string PrimeSafeInspectionMode { get; init; } = "metadata_only";
     public string PrivilegedInspectionMode { get; init; } = "full_payload";
+}
+
+public sealed record TemporalComparisonHorizonPolicy
+{
+    public string HorizonId { get; init; } = string.Empty;
+    public string Mode { get; init; } = string.Empty;
+    public int Value { get; init; }
+    public bool UseForStateClassification { get; init; }
 }
 
 public sealed record TemporalStateThresholdPolicy

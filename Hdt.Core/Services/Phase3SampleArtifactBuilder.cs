@@ -9,6 +9,9 @@ public sealed class Phase3SampleArtifactBuilder
     private enum Phase3SampleVariant
     {
         Valid,
+        ComparisonPeerDelayed,
+        ComparisonPeerDivergent,
+        IncompatiblePrimaryHorizon,
         InvalidDerivedPhaseSlice
     }
 
@@ -18,6 +21,15 @@ public sealed class Phase3SampleArtifactBuilder
 
     public LoadedHopngArtifact Create(NewHopngRequest request) =>
         Create(request, Phase3SampleVariant.Valid);
+
+    public LoadedHopngArtifact CreateComparisonPeer(NewHopngRequest request) =>
+        Create(request, Phase3SampleVariant.ComparisonPeerDelayed);
+
+    public LoadedHopngArtifact CreateDivergentComparisonPeer(NewHopngRequest request) =>
+        Create(request, Phase3SampleVariant.ComparisonPeerDivergent);
+
+    public LoadedHopngArtifact CreateIncompatiblePrimaryHorizonSample(NewHopngRequest request) =>
+        Create(request, Phase3SampleVariant.IncompatiblePrimaryHorizon);
 
     public LoadedHopngArtifact CreateInvalidDerivedPhaseSlice(NewHopngRequest request) =>
         Create(request, Phase3SampleVariant.InvalidDerivedPhaseSlice);
@@ -117,10 +129,10 @@ public sealed class Phase3SampleArtifactBuilder
             {
                 ObservedSetId = $"{artifact.Manifest.ArtifactId}-observed",
                 ArtifactId = artifact.Manifest.ArtifactId,
-                ObservedDurationMs = 30000,
+                ObservedDurationMs = 40000,
                 BaseSliceCadenceMs = 1000,
-                RawSliceCount = 30,
-                ObservedEventCount = 300,
+                RawSliceCount = 40,
+                ObservedEventCount = 420,
                 EventGroupingMode = "fixed_raw_count",
                 EventGroupingSizeRawSlices = 10,
                 PrimeSafeInspectionMode = "metadata_only",
@@ -134,9 +146,11 @@ public sealed class Phase3SampleArtifactBuilder
             [
                 EventSlice(artifact.Manifest.ArtifactId, 0, "event-0", 0, 9, 120, 0.20, 0.10, 0.40, 0.30, 0.20, 0.50),
                 EventSlice(artifact.Manifest.ArtifactId, 1, "event-1", 10, 19, 90, 0.45, 0.30, 0.70, 0.10, 0.10, 0.40),
-                EventSlice(artifact.Manifest.ArtifactId, 2, "event-2", 20, 29, 90, 0.50, 0.35, 0.90, 0.40, 0.30, 0.65)
+                EventSlice(artifact.Manifest.ArtifactId, 2, "event-2", 20, 29, 100, 0.50, 0.35, 0.90, 0.40, 0.30, 0.65),
+                EventSlice(artifact.Manifest.ArtifactId, 3, "event-3", 30, 39, 110, 0.38, 0.15, 0.60, 0.55, 0.40, 0.80)
             ]
         };
+        eventSliceSet = ApplyEventSliceVariant(eventSliceSet, variant);
 
         var phasePolicy = new PhasePolicy
         {
@@ -148,7 +162,24 @@ public sealed class Phase3SampleArtifactBuilder
             PhaseWindowSizeEventSlices = 2,
             PhaseWindowDurationMs = 20000,
             MaxPhaseWindowSpanMs = 20000,
-            ComparisonHorizonRawSlices = 10,
+            ComparisonHorizonRawSlices = 20,
+            ComparisonHorizons =
+            [
+                new TemporalComparisonHorizonPolicy
+                {
+                    HorizonId = "adjacent-raw-10",
+                    Mode = "raw_slices",
+                    Value = 10,
+                    UseForStateClassification = false
+                },
+                new TemporalComparisonHorizonPolicy
+                {
+                    HorizonId = "widened-duration-20000",
+                    Mode = "duration_ms",
+                    Value = 20000,
+                    UseForStateClassification = true
+                }
+            ],
             AggregationPolicies = new Dictionary<string, string>(StringComparer.Ordinal)
             {
                 ["pressure"] = "mean",
@@ -159,6 +190,7 @@ public sealed class Phase3SampleArtifactBuilder
             PrimeSafeInspectionMode = "metadata_only",
             PrivilegedInspectionMode = "full_payload"
         };
+        phasePolicy = ApplyPhasePolicyVariant(phasePolicy, variant);
 
         var opticalChannels = new OpticalChannelsDefinition
         {
@@ -244,6 +276,127 @@ public sealed class Phase3SampleArtifactBuilder
             Phase3SampleVariant.InvalidDerivedPhaseSlice => BuildInvalidDerivedPhaseSliceSet(phaseSliceSet),
             _ => phaseSliceSet
         };
+
+    private static EventSliceSet ApplyEventSliceVariant(EventSliceSet eventSliceSet, Phase3SampleVariant variant) =>
+        variant switch
+        {
+            Phase3SampleVariant.ComparisonPeerDelayed => BuildComparisonPeerEventSliceSet(eventSliceSet),
+            Phase3SampleVariant.ComparisonPeerDivergent => BuildDivergentComparisonPeerEventSliceSet(eventSliceSet),
+            _ => eventSliceSet
+        };
+
+    private static PhasePolicy ApplyPhasePolicyVariant(PhasePolicy phasePolicy, Phase3SampleVariant variant) =>
+        variant switch
+        {
+            Phase3SampleVariant.IncompatiblePrimaryHorizon => BuildIncompatiblePrimaryHorizonPolicy(phasePolicy),
+            _ => phasePolicy
+        };
+
+    private static EventSliceSet BuildComparisonPeerEventSliceSet(EventSliceSet eventSliceSet)
+    {
+        if (eventSliceSet.Slices.Count == 0)
+        {
+            return eventSliceSet;
+        }
+
+        var slices = eventSliceSet.Slices.ToList();
+        var lastSlice = slices[^1];
+        var universeStates = new Dictionary<string, TemporalUniverseState>(lastSlice.UniverseStates, StringComparer.Ordinal)
+        {
+            ["prime-projection"] = new TemporalUniverseState
+            {
+                Pressure = 0.42,
+                Drift = 0.45,
+                Bloom = 0.80
+            },
+            ["cryptic-support"] = new TemporalUniverseState
+            {
+                Pressure = 0.55,
+                Drift = 0.50,
+                Bloom = 0.85
+            }
+        };
+
+        var peerSlice = lastSlice with
+        {
+            UniverseStates = universeStates
+        };
+        peerSlice = peerSlice with
+        {
+            SliceDigest = TemporalSliceDigestService.ComputeEventSliceDigest(peerSlice)
+        };
+
+        slices[^1] = peerSlice;
+        return eventSliceSet with
+        {
+            Slices = slices
+        };
+    }
+
+    private static EventSliceSet BuildDivergentComparisonPeerEventSliceSet(EventSliceSet eventSliceSet)
+    {
+        if (eventSliceSet.Slices.Count == 0)
+        {
+            return eventSliceSet;
+        }
+
+        var slices = eventSliceSet.Slices.ToList();
+        var lastSlice = slices[^1];
+        var universeStates = new Dictionary<string, TemporalUniverseState>(lastSlice.UniverseStates, StringComparer.Ordinal)
+        {
+            ["prime-projection"] = new TemporalUniverseState
+            {
+                Pressure = 0.62,
+                Drift = 0.70,
+                Bloom = 0.95
+            },
+            ["cryptic-support"] = new TemporalUniverseState
+            {
+                Pressure = 0.75,
+                Drift = 0.65,
+                Bloom = 0.95
+            }
+        };
+
+        var peerSlice = lastSlice with
+        {
+            UniverseStates = universeStates
+        };
+        peerSlice = peerSlice with
+        {
+            SliceDigest = TemporalSliceDigestService.ComputeEventSliceDigest(peerSlice)
+        };
+
+        slices[^1] = peerSlice;
+        return eventSliceSet with
+        {
+            Slices = slices
+        };
+    }
+
+    private static PhasePolicy BuildIncompatiblePrimaryHorizonPolicy(PhasePolicy phasePolicy)
+    {
+        var horizons = phasePolicy.ComparisonHorizons
+            .Select(horizon => horizon.HorizonId switch
+            {
+                "adjacent-raw-10" => horizon with
+                {
+                    UseForStateClassification = true
+                },
+                "widened-duration-20000" => horizon with
+                {
+                    UseForStateClassification = false
+                },
+                _ => horizon
+            })
+            .ToList();
+
+        return phasePolicy with
+        {
+            ComparisonHorizonRawSlices = 10,
+            ComparisonHorizons = horizons
+        };
+    }
 
     private static PhaseSliceSet BuildInvalidDerivedPhaseSliceSet(PhaseSliceSet phaseSliceSet)
     {

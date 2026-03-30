@@ -1,6 +1,8 @@
 using System.Text.Json;
 using Hdt.Core;
+using Hdt.Core.Models;
 using Hdt.Core.Services;
+using Hdt.Core.Validation;
 
 namespace Hdt.Cli;
 
@@ -15,6 +17,7 @@ public sealed class CliRunner
     private readonly GovernedProjectionDerivationService _projectionDerivationService = new();
     private readonly ProjectionSupportComparisonService _projectionComparisonService = new();
     private readonly TemporalPhaseStackService _temporalPhaseStackService = new();
+    private readonly TemporalPhaseStackComparisonService _temporalPhaseStackComparisonService = new();
 
     public CliRunner(TextWriter writer)
     {
@@ -38,12 +41,16 @@ public sealed class CliRunner
             {
                 "new" => CreateArtifact(options),
                 "new-phase3-sample" => CreatePhase3Sample(options),
+                "new-phase3-peer-sample" => CreatePhase3PeerSample(options),
+                "new-phase3-divergent-peer-sample" => CreatePhase3DivergentPeerSample(options),
+                "new-phase3-incompatible-basis-sample" => CreatePhase3IncompatibleBasisSample(options),
                 "new-phase3-invalid-sample" => CreateInvalidPhase3Sample(options),
                 "validate" => ValidateArtifact(options),
                 "show" => ShowArtifact(options),
                 "merge-layers" => MergeLayers(options),
                 "render-phase-stack" => RenderPhaseStack(options),
                 "compare-surfaces" => CompareSurfaces(options),
+                "compare-phase-stacks" => ComparePhaseStacks(options),
                 "invoke-formation" => Reserved("Invoke-HOPNGFormation", 5),
                 "bind-oe" => Reserved("Bind-HOPNGToOE", 6),
                 _ => UnknownCommand(command)
@@ -122,6 +129,87 @@ public sealed class CliRunner
             options.Get("public-key-out"));
 
         var artifact = _phase3SampleBuilder.CreateInvalidDerivedPhaseSlice(request);
+        Write(new
+        {
+            artifactId = artifact.Manifest.ArtifactId,
+            manifest = artifact.Layout.ManifestPath,
+            projection = artifact.Layout.ProjectionPath,
+            signature = artifact.Layout.SignaturePath,
+            eventSlices = artifact.Layout.EventSlicePath,
+            phaseSlices = artifact.Layout.PhaseSlicePath
+        }, options.Json);
+
+        return 0;
+    }
+
+    private int CreatePhase3PeerSample(CliOptions options)
+    {
+        var request = new NewHopngRequest(
+            options.Require("output-dir"),
+            options.Require("name"),
+            options.Get("signer", Environment.UserName),
+            options.Get("key-id", "local-dev-key"),
+            options.Get("display-name"),
+            options.Get("artifact-id"),
+            options.Get("private-key"),
+            options.Get("private-key-out"),
+            options.Get("public-key-out"));
+
+        var artifact = _phase3SampleBuilder.CreateComparisonPeer(request);
+        Write(new
+        {
+            artifactId = artifact.Manifest.ArtifactId,
+            manifest = artifact.Layout.ManifestPath,
+            projection = artifact.Layout.ProjectionPath,
+            signature = artifact.Layout.SignaturePath,
+            eventSlices = artifact.Layout.EventSlicePath,
+            phaseSlices = artifact.Layout.PhaseSlicePath
+        }, options.Json);
+
+        return 0;
+    }
+
+    private int CreatePhase3IncompatibleBasisSample(CliOptions options)
+    {
+        var request = new NewHopngRequest(
+            options.Require("output-dir"),
+            options.Require("name"),
+            options.Get("signer", Environment.UserName),
+            options.Get("key-id", "local-dev-key"),
+            options.Get("display-name"),
+            options.Get("artifact-id"),
+            options.Get("private-key"),
+            options.Get("private-key-out"),
+            options.Get("public-key-out"));
+
+        var artifact = _phase3SampleBuilder.CreateIncompatiblePrimaryHorizonSample(request);
+        Write(new
+        {
+            artifactId = artifact.Manifest.ArtifactId,
+            manifest = artifact.Layout.ManifestPath,
+            projection = artifact.Layout.ProjectionPath,
+            signature = artifact.Layout.SignaturePath,
+            eventSlices = artifact.Layout.EventSlicePath,
+            phaseSlices = artifact.Layout.PhaseSlicePath
+        }, options.Json);
+
+        return 0;
+    }
+
+    private int CreatePhase3DivergentPeerSample(CliOptions options)
+    {
+        var request = new NewHopngRequest(
+            options.Require("output-dir"),
+            options.Require("name"),
+            options.Get("signer", Environment.UserName),
+            options.Get("key-id", "local-dev-key"),
+            options.Get("display-name"),
+            options.Get("artifact-id"),
+            options.Get("private-key"),
+            options.Get("private-key-out"),
+            options.Get("public-key-out"));
+
+        var artifact = _phase3SampleBuilder.CreateDivergentComparisonPeer(request);
         Write(new
         {
             artifactId = artifact.Manifest.ArtifactId,
@@ -232,17 +320,86 @@ public sealed class CliRunner
             _writer.WriteLine($"Event slices: {result.EventSliceCount}");
             _writer.WriteLine($"Phase slices: {result.PhaseSliceCount}");
             _writer.WriteLine($"Grouping: {result.GroupingSummary}");
+            _writer.WriteLine($"Primary horizon: {result.PrimaryHorizonId}");
             _writer.WriteLine($"Horizon: {result.HorizonRawSlices} raw slices / {result.HorizonDurationMs} ms");
+            _writer.WriteLine($"Declared horizon summaries: {result.HorizonSummaries.Count}");
             _writer.WriteLine($"Required channels covered: {result.RequiredChannelCoverage}");
             _writer.WriteLine($"Payload mode: {result.PayloadMode}");
             _writer.WriteLine($"Drift flags: {result.DriftFlags.Count}");
             _writer.WriteLine($"Topology flags: {result.TopologyChangeFlags.Count}");
+
+            if (result.StateSummaries.Count > 0)
+            {
+                var finalState = result.StateSummaries[^1];
+                _writer.WriteLine($"Final state: {finalState.StateClass} on {finalState.SliceId}");
+                _writer.WriteLine($"Final anchor: {FormatOptional(finalState.AnchorSliceId)}");
+                _writer.WriteLine($"Final derived force: {finalState.DerivedForceMagnitude:0.000000} ({finalState.DerivedForceDirection})");
+                WriteSignalSection("Final basis signals", finalState.BasisSignals);
+            }
+
+            WriteHorizonSummarySection(result.HorizonSummaries);
+            WriteSignalSection("Issues", result.Issues);
+            WriteValidationIssueSection("Validation issues", result.ValidationIssues);
         }
 
         return result.Status switch
         {
             Hdt.Core.Models.TemporalStackStatus.LawfullyDerived => 0,
             Hdt.Core.Models.TemporalStackStatus.StructurallyIncomplete => 24,
+            _ => 25
+        };
+    }
+
+    private int ComparePhaseStacks(CliOptions options)
+    {
+        var view = options.Get("view", "prime");
+        var rawSliceHorizon = options.Get("h") is { } horizonText
+            ? int.Parse(horizonText)
+            : (int?)null;
+        var result = _temporalPhaseStackComparisonService.Compare(
+            options.Require("left"),
+            options.Require("right"),
+            view,
+            rawSliceHorizon);
+
+        if (options.Json)
+        {
+            Write(result, true);
+        }
+        else
+        {
+            _writer.WriteLine($"Temporal comparison classification: {result.Classification}");
+            _writer.WriteLine($"Basis alignment: {result.BasisAlignmentStatus}");
+            _writer.WriteLine($"State compatibility: {result.TemporalStateCompatibility}");
+            if (string.Equals(result.BasisAlignmentStatus, "Aligned", StringComparison.Ordinal))
+            {
+                _writer.WriteLine($"Primary horizon: {result.PrimaryHorizonDurationMs} ms / {result.PrimaryHorizonRawSlices} raw slices");
+            }
+            else
+            {
+                _writer.WriteLine($"Primary horizons: left {result.LeftPrimaryHorizonDurationMs} ms / {result.LeftPrimaryHorizonRawSlices} raw slices vs right {result.RightPrimaryHorizonDurationMs} ms / {result.RightPrimaryHorizonRawSlices} raw slices");
+            }
+            _writer.WriteLine($"Final states: {result.LeftFinalStateClass} ({result.LeftFinalStateDirection}) vs {result.RightFinalStateClass} ({result.RightFinalStateDirection})");
+            _writer.WriteLine($"State rank delta: {FormatStateRankDelta(result.StateRankDelta)}");
+            _writer.WriteLine($"Comparable phase slices: {result.ComparablePhaseSliceCount}");
+            _writer.WriteLine($"Drift delta magnitude: {result.DriftDeltaMagnitude:0.000000}");
+            _writer.WriteLine($"Derived force delta magnitude: {result.DerivedForceDeltaMagnitude:0.000000}");
+            _writer.WriteLine($"Topology delta count: {result.TopologyDeltaCount}");
+            _writer.WriteLine($"Similarity score: {result.SimilarityScore:0.000000}");
+            _writer.WriteLine($"Classification reason: {result.ClassificationReason}");
+            _writer.WriteLine($"Payload mode: {result.PayloadMode}");
+            WriteSignalSection("Basis signals", result.BasisSignals);
+            WriteSignalSection("Signals", result.Signals);
+            WriteSignalSection("Left issues", result.LeftIssues);
+            WriteSignalSection("Right issues", result.RightIssues);
+            WriteValidationIssueSection("Left validation issues", result.LeftValidationIssues);
+            WriteValidationIssueSection("Right validation issues", result.RightValidationIssues);
+        }
+
+        return result.Classification switch
+        {
+            "Convergent" or "Delayed" or "Divergent" => 0,
+            "Incompatible" => 24,
             _ => 25
         };
     }
@@ -265,19 +422,71 @@ public sealed class CliRunner
         _writer.WriteLine("Hdt.Cli commands:");
         _writer.WriteLine("  new --output-dir <dir> --name <artifact> [--display-name <text>] [--signer <name>] [--key-id <id>] [--json]");
         _writer.WriteLine("  new-phase3-sample --output-dir <dir> --name <artifact> [--display-name <text>] [--signer <name>] [--key-id <id>] [--json]");
+        _writer.WriteLine("  new-phase3-peer-sample --output-dir <dir> --name <artifact> [--display-name <text>] [--signer <name>] [--key-id <id>] [--json]");
+        _writer.WriteLine("  new-phase3-divergent-peer-sample --output-dir <dir> --name <artifact> [--display-name <text>] [--signer <name>] [--key-id <id>] [--json]");
+        _writer.WriteLine("  new-phase3-incompatible-basis-sample --output-dir <dir> --name <artifact> [--display-name <text>] [--signer <name>] [--key-id <id>] [--json]");
         _writer.WriteLine("  new-phase3-invalid-sample --output-dir <dir> --name <artifact> [--display-name <text>] [--signer <name>] [--key-id <id>] [--json]");
         _writer.WriteLine("  validate --path <manifest-or-png> [--json]");
         _writer.WriteLine("  show --path <manifest-or-png> [--view prime|privileged] [--json]");
         _writer.WriteLine("  merge-layers --path <manifest-or-png> [--json]");
         _writer.WriteLine("  render-phase-stack --path <manifest-or-png> [--view prime|privileged] [--h <raw-slice-horizon>] [--json]");
+        _writer.WriteLine("  compare-phase-stacks --left <manifest-or-png> --right <manifest-or-png> [--view prime|privileged] [--h <raw-slice-horizon>] [--json]");
         _writer.WriteLine("  compare-surfaces --left <manifest-or-png> --right <manifest-or-png> [--json]");
         _writer.WriteLine("  invoke-formation | bind-oe");
         _writer.WriteLine("Exit codes:");
-        _writer.WriteLine("  0  lawful success");
-        _writer.WriteLine("  24 structurally incomplete derivation or comparison");
-        _writer.WriteLine("  25 flattened or unsupported derivation or comparison");
+        _writer.WriteLine("  0  lawful success, valid temporal render, or aligned comparison result");
+        _writer.WriteLine("  21 reserved later-phase command invoked");
+        _writer.WriteLine("  24 temporal derivation incomplete or basis-incompatible temporal comparison");
+        _writer.WriteLine("  25 flattened, unsupported, or invalid derivation or comparison surface");
         _writer.WriteLine("  10-23 validation failures returned from the core validator");
     }
+
+    private void WriteHorizonSummarySection(IReadOnlyList<TemporalHorizonSummary> horizonSummaries)
+    {
+        _writer.WriteLine($"Horizon summaries: {horizonSummaries.Count}");
+        foreach (var horizon in horizonSummaries)
+        {
+            var primaryMarker = horizon.UseForStateClassification ? " [primary]" : string.Empty;
+            _writer.WriteLine(
+                $"  - {horizon.HorizonId}{primaryMarker}: {horizon.HorizonDurationMs} ms / {horizon.HorizonRawSlices} raw slices, comparable={horizon.ComparableSliceCount}, missing anchors={horizon.MissingAnchorSliceIds.Count}, drift flags={horizon.DriftFlags.Count}, topology flags={horizon.TopologyFlags.Count}");
+        }
+    }
+
+    private void WriteSignalSection(string heading, IReadOnlyCollection<string> signals)
+    {
+        _writer.WriteLine($"{heading}: {signals.Count}");
+        foreach (var signal in signals.Take(3))
+        {
+            _writer.WriteLine($"  - {signal}");
+        }
+
+        if (signals.Count > 3)
+        {
+            _writer.WriteLine($"  - ... {signals.Count - 3} more");
+        }
+    }
+
+    private void WriteValidationIssueSection(string heading, IReadOnlyCollection<ValidationIssue> issues)
+    {
+        _writer.WriteLine($"{heading}: {issues.Count}");
+        foreach (var issue in issues.Take(3))
+        {
+            _writer.WriteLine($"  - {issue.Code}: {issue.Message}");
+        }
+
+        if (issues.Count > 3)
+        {
+            _writer.WriteLine($"  - ... {issues.Count - 3} more");
+        }
+    }
+
+    private static string FormatOptional(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? "(none)" : value;
+
+    private static string FormatStateRankDelta(int? stateRankDelta) =>
+        stateRankDelta.HasValue
+            ? stateRankDelta.Value.ToString("+0;-0;0")
+            : "(unavailable)";
 
     private void Write(object value, bool asJson)
     {

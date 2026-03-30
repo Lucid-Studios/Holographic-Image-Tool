@@ -1,6 +1,6 @@
 # Holographic Data Tool
 
-The Holographic Data Tool (HDT) is a Windows-first CLI for creating, validating, and inspecting `.hopng` artifacts. Phase 1 is implemented end to end, Phase 2 is implemented as the operator-ready relational layer, and Phase 3 Milestone 1 is now implemented as the first single-artifact temporal layer: deterministic manifests, lawful sidecars, Ed25519 trust material, Prime-safe inspection, relational universes, governed merge derivation, artifact-to-artifact comparison, observed-set summaries, derived phase slices, and diagnostic temporal rendering.
+The Holographic Data Tool (HDT) is a Windows-first CLI for creating, validating, and inspecting `.hopng` artifacts. Phase 1 and Phase 2 are implemented as stable artifact and relational baselines. Phase 3 Milestones 1 through 3 now form the approved single-clock temporal release baseline as of March 30, 2026: deterministic manifests, lawful sidecars, Ed25519 trust material, Prime-safe inspection, relational universes, governed merge derivation, temporal state summaries, widened-horizon diagnostics, committed temporal reference pairs, and governed cross-artifact phase-stack comparison.
 
 ## Projects
 
@@ -17,12 +17,18 @@ Supported operator commands:
 ```powershell
 .\New-HOPNG.ps1 --output-dir .\examples --name sample --signer "Local Tester" --key-id "dev-key"
 .\New-HOPNGPhase3Sample.ps1 --output-dir .\examples --name phase3-sample --json
+.\New-HOPNGPhase3PeerSample.ps1 --output-dir .\examples --name phase3-peer-sample --json
+.\New-HOPNGPhase3DivergentPeerSample.ps1 --output-dir .\examples --name phase3-divergent-peer --json
+.\New-HOPNGPhase3IncompatibleBasisSample.ps1 --output-dir .\examples --name phase3-incompatible-basis --json
 .\New-HOPNGPhase3InvalidSample.ps1 --output-dir .\examples --name phase3-invalid-derived --json
 .\Test-HOPNG.ps1 --path .\examples\phase2-sample.hopng.json --json
 .\Show-HOPNG.ps1 --path .\examples\phase2-sample.hopng.json --view privileged --json
 .\Merge-HOPNGLayers.ps1 --path .\examples\phase2-sample.hopng.json --json
 .\Compare-HOPNGSurfaces.ps1 --left .\examples\phase2-sample.hopng.json --right .\examples\phase1-sample.hopng.json --json
 .\Render-HOPNGPhaseStack.ps1 --path .\examples\phase3-sample.hopng.json --view prime --json
+.\Compare-HOPNGPhaseStacks.ps1 --left .\examples\phase3-sample.hopng.json --right .\examples\phase3-peer-sample.hopng.json --view prime --json
+.\Compare-HOPNGPhaseStacks.ps1 --left .\examples\phase3-sample.hopng.json --right .\examples\phase3-divergent-peer.hopng.json --view prime --json
+.\Compare-HOPNGPhaseStacks.ps1 --left .\examples\phase3-sample.hopng.json --right .\examples\phase3-incompatible-basis.hopng.json --view prime --json
 ```
 
 Later-phase commands remain reserved:
@@ -30,9 +36,22 @@ Later-phase commands remain reserved:
 - `.\Invoke-HOPNGFormation.ps1`
 - `.\Bind-HOPNGToOE.ps1`
 
-`Render-HOPNGPhaseStack.ps1` requires an artifact that declares the Phase 3 temporal sidecars and now includes initial temporal state summaries backed by explicit `stateThresholds`, `phaseWindowDurationMs`, and `maxPhaseWindowSpanMs` in the phase policy.
+`Render-HOPNGPhaseStack.ps1` requires an artifact that declares the Phase 3 temporal sidecars and now includes temporal state summaries backed by explicit `stateThresholds`, `phaseWindowDurationMs`, `maxPhaseWindowSpanMs`, and explicit `comparisonHorizons` in the phase policy.
+Its human-readable output now includes final state context, horizon summaries, and validation or issue counts without requiring JSON mode.
+
+`Compare-HOPNGPhaseStacks.ps1` now reports basis alignment, final state posture, state-rank delta, classification reason, comparable slice count, and basis or signal summaries in human-readable mode, while keeping deterministic exit codes for automation.
 
 The committed public-safe temporal reference sets live under `.\examples\phase3-sample.*` and `.\examples\phase3-invalid-derived.*`.
+The committed lawful comparison peer lives under `.\examples\phase3-peer-sample.*`.
+The committed lawful divergent comparison peer lives under `.\examples\phase3-divergent-peer.*`.
+The committed lawful incompatible-basis comparison artifact lives under `.\examples\phase3-incompatible-basis.*`.
+
+## Temporal Exit Codes
+
+For the active Phase 3 operator surface:
+
+- `Render-HOPNGPhaseStack.ps1` returns `0` for lawful temporal derivation, `24` for structurally incomplete temporal derivation, and `25` for unsupported temporal surfaces.
+- `Compare-HOPNGPhaseStacks.ps1` returns `0` for aligned comparison results such as `Convergent`, `Delayed`, or `Divergent`, `24` for lawful but basis-incompatible comparison pairs, and `25` for flattened, unsupported, or otherwise invalid temporal comparison surfaces.
 
 ## Repo Checks
 
@@ -42,12 +61,24 @@ Repo-local verification helpers:
 .\scripts\Invoke-HdtRepoChecks.ps1
 .\scripts\Invoke-Phase2ReleaseSmoke.ps1
 .\scripts\Invoke-Phase3ReleaseSmoke.ps1
+.\scripts\Invoke-Phase3ComparisonSmoke.ps1
+.\scripts\Invoke-Phase3ComparisonFailureSmoke.ps1
 .\scripts\Invoke-Phase3FailureSmoke.ps1
 ```
+
+The Phase 3 smoke scripts now assert both JSON output and human-readable operator text for render and comparison paths, and they cover delayed, divergent, incompatible, and flattened-or-unsupported comparison outcomes through wrapper-backed artifact flows rather than validating only machine-readable branches.
+
+## Current Development Lane
+
+The current admitted main lane is post-release maintenance of the approved Phase 3 single-clock `.hopng` temporal surface plus validator-first promotion prep for the deferred Milestone 4 research lane. The future `.hogif` and heterochronous continuity track remains doctrine-first and validator-first rather than container-first.
+
+See [docs/DEVELOPMENT_PATH.md](docs/DEVELOPMENT_PATH.md) for the full lane model, promotion rules, and repo-wide execution path.
 
 ## Governance
 
 Lucid Technologies repository standards for AI governance, citizen science, data handling, and GitHub workflow are recorded in [docs/LUCID_TECHNOLOGIES_STANDARDS.md](docs/LUCID_TECHNOLOGIES_STANDARDS.md).
+
+Operator execution continuity and HITL pause conditions are recorded in [docs/OPERATOR_CONTINUITY_INSTRUCTIONS.md](docs/OPERATOR_CONTINUITY_INSTRUCTIONS.md).
 
 Community and contribution guidance lives in:
 
@@ -85,7 +116,7 @@ Committed reference artifacts omit private signing keys. Signing-key generation 
 
 See [`examples/README.md`](examples/README.md) for the current committed reference sets, including the Phase 3 temporal sample.
 
-See [docs/ARTIFACT_MODEL.md](docs/ARTIFACT_MODEL.md) for the artifact contract and [docs/PHASE_BACKLOG.md](docs/PHASE_BACKLOG.md) for the staged roadmap.
+See [docs/ARTIFACT_MODEL.md](docs/ARTIFACT_MODEL.md) for the artifact contract, [docs/DEVELOPMENT_PATH.md](docs/DEVELOPMENT_PATH.md) for the current execution path, [docs/PHASE_ROADMAP.md](docs/PHASE_ROADMAP.md) for the semantic roadmap, and [docs/PHASE_BACKLOG.md](docs/PHASE_BACKLOG.md) for the execution backlog.
 
 For the semantic progression of the system from trusted artifact to Sanctuary/OE runtime participant, see [docs/PHASE_ROADMAP.md](docs/PHASE_ROADMAP.md).
 
@@ -93,7 +124,7 @@ For the first concrete execution slice of lawful relationality, see [docs/PHASE_
 
 For the next Phase 2 execution slice focused on governed projection derivation and merge behavior, see [docs/PHASE_2_MILESTONE_2.md](docs/PHASE_2_MILESTONE_2.md).
 
-For the operator-facing hardening criteria for the current release target, see [docs/PHASE_2_RELEASE_READY.md](docs/PHASE_2_RELEASE_READY.md).
+For the completed Phase 2 release baseline, see [docs/PHASE_2_RELEASE_READY.md](docs/PHASE_2_RELEASE_READY.md).
 
 For the first temporal implementation slice, see [docs/PHASE_3_MILESTONE_1.md](docs/PHASE_3_MILESTONE_1.md).
 

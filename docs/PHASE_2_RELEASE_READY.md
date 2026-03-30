@@ -1,6 +1,6 @@
 # Phase 2 Release-Ready Criteria
 
-This document defines the internal-first stop line for declaring the current Holographic Data Tool implementation operational at Phase 2.
+This document records the internal-first stop line that established the Phase 2 operational baseline before the repo moved into the current Phase 3 temporal lane.
 
 ## Supported Command Surface
 

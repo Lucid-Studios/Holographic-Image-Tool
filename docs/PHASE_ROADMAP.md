@@ -260,12 +260,37 @@ Artifacts become runtime-governed participants in Sanctuary and OE life.
 - each new semantic layer should be explicit in schema, validation, and comparison behavior
 - later phases should emerge from prior lawful structure rather than bypass it
 
+## Development Lanes
+
+The semantic roadmap is broader than the active implementation lane.
+
+The current admitted implementation lane is:
+
+- post-release maintenance of the approved Phase 3 single-clock `.hopng` temporal surface
+- validator-first promotion prep for the deferred Phase 3 Milestone 4 research lane
+
+Promoted doctrine now constraining that lane includes:
+
+- operator cascade governance
+- honest substrate principles
+- heterochronous timing doctrine
+- admissible identity morphism law
+
+Those promoted doctrines do not mean `.hogif` is now an active implementation target. They mean future work already has accepted boundaries and stop lines.
+
+The deferred research lane is:
+
+- Phase 3 Milestone 4 heterochronous continuity research and validator-first planning
+
+Phases 4 through 6 remain blocked behind the stabilized Phase 3 release baseline and the later promotion of stable identity-morphism and async-channel prerequisites.
+
 ## Current Status
 
 - Phase 1 is implemented
-- Phase 2 is implemented as the lawful relational operator layer
-- Phase 3 Milestone 1 is implemented as the first single-artifact temporal layer
-- Phase 3 Milestones 2 and 3 are planned, followed by a single-clock Phase 3 release-ready hardening gate
-- Phase 3 Milestone 4 is defined as a later heterochronous extension track and does not change the current release gate
+- Phase 2 is implemented and maintained as the lawful relational baseline
+- Phase 3 Milestones 1 through 3 are implemented on the single-clock temporal lane
+- the single-clock Phase 3 release baseline was approved on March 30, 2026
+- post-release maintenance of the approved Phase 3 temporal surface is the current admitted main lane
+- Phase 3 Milestone 4 is promoted as a research-lane planning dependency and does not change the approved single-clock release baseline
 - Phases 4 through 6 remain defined here as the governing semantic roadmap
-- [`PHASE_BACKLOG.md`](./PHASE_BACKLOG.md) remains the shorter execution-oriented companion document
+- [`DEVELOPMENT_PATH.md`](./DEVELOPMENT_PATH.md) and [`PHASE_BACKLOG.md`](./PHASE_BACKLOG.md) remain the execution-oriented companion documents

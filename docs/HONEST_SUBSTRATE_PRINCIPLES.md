@@ -219,6 +219,21 @@ Meaningful actions should remain:
 - policy-evaluable
 - reviewable by human-in-the-loop governance where required
 
+### Operator Continuity
+
+Normal execution should proceed under bounded cascade authorization within the currently admitted build lane.
+
+Pause and request HITL intervention only when:
+
+- work would cross into a new architectural domain or research claim
+- governance, security, cryptic-layer semantics, or admissibility rules would change
+- verification fails or remains ambiguous inside current standing
+- an irreversible destructive action is required
+- operator preference is required beyond established doctrine
+- promotion, commitment, release, or formal adoption requires operator review
+
+Otherwise, continuity of execution should be preserved so the system can advance the active milestone with lawful structure, traceable reasoning, verification receipts, and bounded scope intact.
+
 ## System Guarantees
 
 The system should be designed so that there is:
@@ -244,6 +259,7 @@ This creates a substrate where:
 This doctrine complements, but does not replace, the repository governance recorded in:
 
 - [`LUCID_TECHNOLOGIES_STANDARDS.md`](./LUCID_TECHNOLOGIES_STANDARDS.md)
+- [`OPERATOR_CONTINUITY_INSTRUCTIONS.md`](./OPERATOR_CONTINUITY_INSTRUCTIONS.md)
 - [`PHASE_3_MILESTONE_4.md`](./PHASE_3_MILESTONE_4.md)
 - [`HOGIF_BUILD_GOVERNANCE.md`](./HOGIF_BUILD_GOVERNANCE.md)
 

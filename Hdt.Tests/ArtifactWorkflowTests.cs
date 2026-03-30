@@ -453,6 +453,23 @@ public sealed class ArtifactWorkflowTests
     }
 
     [Fact]
+    public void Phase3_Validation_Fails_When_Primary_Comparison_Horizon_Does_Not_Match_Legacy_Raw_Horizon()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var artifact = Phase3ArtifactFactory.CreateValid(tempDir, "phase3-bad-horizon");
+        JsonFile.Mutate(artifact.Layout.PhasePolicyPath, json =>
+        {
+            json["comparisonHorizons"]!.AsArray()[1]!["value"] = 30000;
+        });
+        artifact = Phase2ArtifactFactory.RefreshIntegrity(artifact);
+
+        var validation = new HopngArtifactValidator().Validate(artifact.Layout.ManifestPath);
+
+        validation.IsValid.Should().BeFalse();
+        validation.Errors.Should().Contain(issue => issue.Code == ValidationErrorCode.InvalidPhasePolicy);
+    }
+
+    [Fact]
     public void Phase3_Render_Is_Deterministic_And_Flags_Drift()
     {
         var tempDir = TestPaths.CreateTempDirectory();
@@ -466,6 +483,9 @@ public sealed class ArtifactWorkflowTests
         first.Status.Should().Be(TemporalStackStatus.LawfullyDerived);
         first.RequiredChannelCoverage.Should().BeTrue();
         first.DriftFlags.Should().NotBeEmpty();
+        first.PrimaryHorizonId.Should().Be("widened-duration-20000");
+        first.HorizonSummaries.Should().Contain(summary => summary.UseForStateClassification && summary.Mode == "duration_ms");
+        first.StateSummaries.Should().Contain(summary => summary.AnchorSliceId == "phase-1");
         first.Should().BeEquivalentTo(second);
     }
 
@@ -498,5 +518,77 @@ public sealed class ArtifactWorkflowTests
         firstLoad.PhaseSliceSet!.Slices.Select(slice => slice.SliceDigest)
             .Should()
             .Equal(secondLoad.PhaseSliceSet!.Slices.Select(slice => slice.SliceDigest));
+    }
+
+    [Fact]
+    public void Phase3_Comparison_Classifies_Matching_Artifacts_As_Convergent()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var artifact = Phase3ArtifactFactory.CreateValid(tempDir, "phase3-convergent");
+        var comparison = new TemporalPhaseStackComparisonService().Compare(
+            artifact.Layout.ManifestPath,
+            artifact.Layout.ManifestPath);
+
+        comparison.Classification.Should().Be("Convergent");
+        comparison.BasisAlignmentStatus.Should().Be("Aligned");
+        comparison.TemporalStateCompatibility.Should().Be("Aligned");
+        comparison.TopologyDeltaCount.Should().Be(0);
+    }
+
+    [Fact]
+    public void Phase3_Comparison_Classifies_Lawful_Peer_As_Delayed()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var leftArtifact = Phase3ArtifactFactory.CreateValid(tempDir, "phase3-left");
+        var rightArtifact = Phase3ArtifactFactory.CreateDelayedPeer(tempDir, "phase3-right-delayed");
+        var comparison = new TemporalPhaseStackComparisonService().Compare(
+            leftArtifact.Layout.ManifestPath,
+            rightArtifact.Layout.ManifestPath);
+
+        comparison.Classification.Should().Be("Delayed");
+        comparison.BasisAlignmentStatus.Should().Be("Aligned");
+        comparison.TemporalStateCompatibility.Should().Be("Delayed");
+        comparison.StateRankDelta.Should().Be(1);
+        comparison.ClassificationReason.Should().Contain("immediately prior lawful state");
+        comparison.Signals.Should().Contain(signal => signal.Contains("immediately prior lawful state", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Phase3_Comparison_Classifies_Lawful_Peer_As_Divergent()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var leftArtifact = Phase3ArtifactFactory.CreateValid(tempDir, "phase3-left-divergent");
+        var rightArtifact = Phase3ArtifactFactory.CreateDivergentPeer(tempDir, "phase3-right-divergent");
+        var comparison = new TemporalPhaseStackComparisonService().Compare(
+            leftArtifact.Layout.ManifestPath,
+            rightArtifact.Layout.ManifestPath);
+
+        comparison.Classification.Should().Be("Divergent");
+        comparison.BasisAlignmentStatus.Should().Be("Aligned");
+        comparison.TemporalStateCompatibility.Should().Be("Divergent");
+        comparison.StateRankDelta.Should().Be(2);
+        comparison.ClassificationReason.Should().Contain("no longer converges");
+        comparison.Signals.Should().Contain(signal => signal.Contains("no longer converges", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Phase3_Comparison_Fails_When_Primary_Horizon_Basis_Differs()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var leftArtifact = Phase3ArtifactFactory.CreateValid(tempDir, "phase3-basis-left");
+        var rightArtifact = Phase3ArtifactFactory.CreateIncompatiblePrimaryHorizon(tempDir, "phase3-basis-right");
+
+        var rightValidation = new HopngArtifactValidator().Validate(rightArtifact.Layout.ManifestPath);
+        rightValidation.IsValid.Should().BeTrue();
+
+        var comparison = new TemporalPhaseStackComparisonService().Compare(
+            leftArtifact.Layout.ManifestPath,
+            rightArtifact.Layout.ManifestPath);
+
+        comparison.Classification.Should().Be("Incompatible");
+        comparison.BasisAlignmentStatus.Should().Be("Incompatible");
+        comparison.StateRankDelta.Should().Be(0);
+        comparison.ClassificationReason.Should().Contain("primary comparison horizon basis differs");
+        comparison.BasisSignals.Should().Contain(signal => signal.Contains("primary comparison horizon basis differs", StringComparison.Ordinal));
     }
 }

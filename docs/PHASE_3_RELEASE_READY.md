@@ -4,6 +4,23 @@ This document defines the stop line for declaring Phase 3 operationally ready be
 
 Phase 3 is only release-ready when temporal semantics are not just implemented, but also documented, testable, operator-safe, and stable enough that later identity-bearing work does not need to reinterpret them.
 
+## Current Status
+
+The single-clock Phase 3 release baseline was operator-approved on March 30, 2026.
+
+This document now serves as both:
+
+- the release stop line for the single-clock temporal surface
+- the approved release record for that baseline
+
+The approved Phase 3 release scope includes:
+
+- single-artifact temporal rendering and deterministic state classification
+- explicit duration-window, max-span, threshold, and comparison-horizon policy
+- governed cross-artifact comparison with `Convergent`, `Delayed`, `Divergent`, `Incompatible`, and `FlattenedOrUnsupported` outcomes
+- human-readable and JSON operator surfaces with deterministic exit codes
+- committed public-safe reference artifacts and wrapper-backed smoke verification
+
 ## Release Target
 
 Phase 3 release-ready means:
@@ -22,14 +39,14 @@ Phase 3 release-ready assumes completion of:
 - [`PHASE_3_MILESTONE_2.md`](./PHASE_3_MILESTONE_2.md)
 - [`PHASE_3_MILESTONE_3.md`](./PHASE_3_MILESTONE_3.md)
 
-Planned Milestone 4 heterochronous channel work is intentionally outside this current single-clock release gate.
+Planned Milestone 4 heterochronous channel work is intentionally outside this approved single-clock release baseline.
 
 ## Required Operator Surface
 
 By release-ready, the public temporal operator surface should include:
 
 - `Render-HOPNGPhaseStack.ps1`
-- a governed cross-artifact temporal comparison command
+- `Compare-HOPNGPhaseStacks.ps1`
 
 The public surface should provide:
 
@@ -38,6 +55,8 @@ The public surface should provide:
 - deterministic exit codes
 - Prime-safe and privileged modes
 
+Human-readable temporal output should remain operator-meaningful without forcing JSON mode. `Render-HOPNGPhaseStack.ps1` should expose final state posture, horizon summaries, and issue counts. `Compare-HOPNGPhaseStacks.ps1` should expose basis alignment, final state posture, state-rank delta, classification reason, comparable slice count, and basis or signal summaries.
+
 ## Reference Artifacts
 
 Release-ready requires intentional public-safe reference artifacts for:
@@ -45,11 +64,13 @@ Release-ready requires intentional public-safe reference artifacts for:
 - one valid Milestone 1 temporal artifact
 - one valid Milestone 2 temporal-state artifact
 - one valid cross-artifact comparison pair
+- one lawful divergent comparison peer
+- one lawful but basis-incompatible comparison artifact
 - one malformed or unsupported temporal artifact for failure-path verification
 
 No committed private signing keys should exist in reference artifacts.
 
-The current hardening baseline already keeps `examples/phase3-sample.*` as the public-safe Milestone 1 temporal reference set and `examples/phase3-invalid-derived.*` as the signed malformed temporal reference set.
+The current hardening baseline already keeps `examples/phase3-sample.*` as the public-safe Milestone 2 temporal reference set, `examples/phase3-peer-sample.*` as the lawful delayed comparison peer, `examples/phase3-divergent-peer.*` as the lawful divergent comparison peer, `examples/phase3-incompatible-basis.*` as the lawful incompatible-basis comparison artifact, and `examples/phase3-invalid-derived.*` as the signed malformed temporal reference set.
 
 ## Verification Gates
 
@@ -61,9 +82,13 @@ Required verification:
   - temporal render
   - temporal state classification
   - cross-artifact temporal comparison
+  - cross-artifact basis-incompatibility failure
+  - cross-artifact flattened-or-unsupported failure
 - documented Prime-safe verification path
 
 The current repo-local smoke path should remain wrapper-backed and artifact-oriented, rather than relying only on filtered test execution. Failure-path verification should also remain artifact-backed so deterministic temporal contract failures stay reproducible.
+
+The wrapper-backed smoke path should verify both JSON and human-readable operator output for the public temporal commands, so release readiness does not silently validate only the machine-readable branch.
 
 ## Documentation Gates
 
@@ -75,6 +100,11 @@ Release-ready documentation must include:
 - updated `PHASE_ROADMAP.md`
 - milestone docs for Milestones 1 through 3
 - operator-facing notes on temporal exit codes and view modes
+
+The current exit-code contract for the public temporal surface is:
+
+- `Render-HOPNGPhaseStack.ps1`: `0` lawful temporal derivation, `24` structurally incomplete temporal derivation, `25` unsupported temporal surface
+- `Compare-HOPNGPhaseStacks.ps1`: `0` aligned comparison result, `24` basis-incompatible comparison, `25` flattened, unsupported, or invalid temporal comparison surface
 
 ## Safety Gates
 

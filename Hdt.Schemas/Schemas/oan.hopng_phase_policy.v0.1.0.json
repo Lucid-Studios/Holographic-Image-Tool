@@ -15,6 +15,7 @@
     "phaseWindowDurationMs",
     "maxPhaseWindowSpanMs",
     "comparisonHorizonRawSlices",
+    "comparisonHorizons",
     "aggregationPolicies",
     "stateThresholds",
     "primeSafeInspectionMode",
@@ -26,6 +27,25 @@
     "artifactId": { "type": "string" },
     "phaseWindowDurationMs": { "type": "integer", "minimum": 1 },
     "maxPhaseWindowSpanMs": { "type": "integer", "minimum": 1 },
+    "comparisonHorizons": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "horizonId",
+          "mode",
+          "value",
+          "useForStateClassification"
+        ],
+        "properties": {
+          "horizonId": { "type": "string" },
+          "mode": { "type": "string", "enum": ["raw_slices", "duration_ms"] },
+          "value": { "type": "integer", "minimum": 1 },
+          "useForStateClassification": { "type": "boolean" }
+        }
+      }
+    },
     "stateThresholds": {
       "type": "object",
       "required": [

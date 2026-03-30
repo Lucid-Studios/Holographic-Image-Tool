@@ -10,6 +10,8 @@ and release hardening on the current build.
 param(
     [switch]$SkipPhase2Smoke,
     [switch]$SkipPhase3Smoke,
+    [switch]$SkipPhase3ComparisonSmoke,
+    [switch]$SkipPhase3ComparisonFailureSmoke,
     [switch]$SkipPhase3FailureSmoke
 )
 
@@ -59,6 +61,18 @@ if (-not $SkipPhase2Smoke) {
 if (-not $SkipPhase3Smoke) {
     Invoke-HdtStep -Label "Run Phase 3 smoke path" -Action {
         & (Join-Path $PSScriptRoot "Invoke-Phase3ReleaseSmoke.ps1")
+    }
+}
+
+if (-not $SkipPhase3ComparisonSmoke) {
+    Invoke-HdtStep -Label "Run Phase 3 comparison smoke path" -Action {
+        & (Join-Path $PSScriptRoot "Invoke-Phase3ComparisonSmoke.ps1")
+    }
+}
+
+if (-not $SkipPhase3ComparisonFailureSmoke) {
+    Invoke-HdtStep -Label "Run Phase 3 comparison failure smoke path" -Action {
+        & (Join-Path $PSScriptRoot "Invoke-Phase3ComparisonFailureSmoke.ps1")
     }
 }
 

@@ -4,7 +4,7 @@ Phase 3 Milestone 2 deepens the single-artifact temporal system established in M
 
 The purpose of this milestone is to make the temporal layer operationally meaningful rather than merely structurally valid.
 
-Current groundwork on the build has started with initial `render-phase-stack` state summaries, derived-force reporting, explicit `stateThresholds`, and explicit duration-window fields carried in `phase-policy` sidecars. Full Milestone 2 completion still requires widened horizon rules.
+This milestone is implemented on the approved single-clock Phase 3 release baseline through `render-phase-stack` state summaries, derived-force reporting, explicit `stateThresholds`, explicit duration-window fields, and explicit `comparisonHorizons` carried in `phase-policy` sidecars. Cross-artifact basis work now belongs to Milestone 3 rather than remaining inside this milestone.
 
 ## Intent
 
@@ -22,6 +22,7 @@ It should answer questions like:
 Milestone 2 includes:
 
 - duration-window and timestamp-span policy support
+- explicit comparison-horizon policy support
 - richer temporal-state classification
 - derived `force` semantics
 - deeper drift analysis across widened horizons

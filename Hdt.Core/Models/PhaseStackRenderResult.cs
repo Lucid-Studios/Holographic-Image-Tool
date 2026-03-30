@@ -14,9 +14,11 @@ public sealed record PhaseStackRenderResult
     public int EventSliceCount { get; init; }
     public int PhaseSliceCount { get; init; }
     public string GroupingSummary { get; init; } = string.Empty;
+    public string PrimaryHorizonId { get; init; } = string.Empty;
     public int HorizonRawSlices { get; init; }
     public int HorizonDurationMs { get; init; }
     public bool RequiredChannelCoverage { get; init; }
+    public List<TemporalHorizonSummary> HorizonSummaries { get; init; } = [];
     public List<string> DriftFlags { get; init; } = [];
     public List<string> TopologyChangeFlags { get; init; } = [];
     public string PayloadMode { get; init; } = string.Empty;
@@ -45,7 +47,23 @@ public sealed record TemporalStateSummary
     public string SliceId { get; init; } = string.Empty;
     public int N { get; init; }
     public string StateClass { get; init; } = string.Empty;
+    public string ComparisonHorizonId { get; init; } = string.Empty;
+    public string AnchorSliceId { get; init; } = string.Empty;
     public double DerivedForceMagnitude { get; init; }
     public string DerivedForceDirection { get; init; } = "neutral";
     public List<string> BasisSignals { get; init; } = [];
+}
+
+public sealed record TemporalHorizonSummary
+{
+    public string HorizonId { get; init; } = string.Empty;
+    public string Mode { get; init; } = string.Empty;
+    public int Value { get; init; }
+    public int HorizonRawSlices { get; init; }
+    public int HorizonDurationMs { get; init; }
+    public bool UseForStateClassification { get; init; }
+    public int ComparableSliceCount { get; init; }
+    public List<string> MissingAnchorSliceIds { get; init; } = [];
+    public List<string> DriftFlags { get; init; } = [];
+    public List<string> TopologyFlags { get; init; } = [];
 }
