@@ -926,6 +926,12 @@ $gitWorktreeReceiptDocument = [ordered]@{
 
 $lastDigestEmittedUtc = if ($digestDue) { $nowUtc.ToString("o") } elseif ($null -ne $previousState) { $previousState.lastDigestEmittedUtc } else { $null }
 $lastWorkReportEmittedUtc = if ($workReportDue) { $nowUtc.ToString("o") } elseif ($null -ne $previousState) { $previousState.lastWorkReportEmittedUtc } else { $null }
+$latestDigestBundlePath = if ($digestDue) { $digestBundlePath } elseif ($null -ne $previousState) { $previousState.lastDigestBundlePath } else { $null }
+$latestDigestBundleId = if ($digestDue) { $bundleId } elseif ($null -ne $previousState) { $previousState.lastDigestBundleId } else { $null }
+$latestWorkReportBundlePath = if ($workReportDue) { $workReportBundlePath } elseif ($null -ne $previousState) { $previousState.lastWorkReportBundlePath } else { $null }
+$latestWorkReportBundleId = if ($workReportDue) { $bundleId } elseif ($null -ne $previousState) { $previousState.lastWorkReportBundleId } else { $null }
+$latestDigestReceiptPath = if ($null -ne $latestDigestBundlePath) { Join-Path $latestDigestBundlePath "release-candidate-digest.json" } else { $null }
+$latestWorkReportReceiptPath = if ($null -ne $latestWorkReportBundlePath) { Join-Path $latestWorkReportBundlePath "work-report.json" } else { $null }
 $cycleStateDocument = [ordered]@{
     schemaVersion = 1
     status = $cycleStatus
@@ -938,11 +944,11 @@ $cycleStateDocument = [ordered]@{
     updatedUtc = $nowUtc.ToString("o")
     lastBundleId = $bundleId
     lastBundlePath = $releaseBundlePath
-    lastDigestBundleId = if ($digestDue) { $bundleId } elseif ($null -ne $previousState) { $previousState.lastDigestBundleId } else { $null }
-    lastDigestBundlePath = if ($digestDue) { $digestBundlePath } elseif ($null -ne $previousState) { $previousState.lastDigestBundlePath } else { $null }
+    lastDigestBundleId = $latestDigestBundleId
+    lastDigestBundlePath = $latestDigestBundlePath
     lastDigestEmittedUtc = $lastDigestEmittedUtc
-    lastWorkReportBundleId = if ($workReportDue) { $bundleId } elseif ($null -ne $previousState) { $previousState.lastWorkReportBundleId } else { $null }
-    lastWorkReportBundlePath = if ($workReportDue) { $workReportBundlePath } elseif ($null -ne $previousState) { $previousState.lastWorkReportBundlePath } else { $null }
+    lastWorkReportBundleId = $latestWorkReportBundleId
+    lastWorkReportBundlePath = $latestWorkReportBundlePath
     lastWorkReportEmittedUtc = $lastWorkReportEmittedUtc
     digestDisposition = if ($digestDue) { "emitted" } else { "skipped-not-due" }
     workReportDisposition = if ($workReportDue) { "emitted" } else { "skipped-not-due" }
@@ -995,14 +1001,14 @@ $taskStatuses = @(
     [ordered]@{
         id = "work-reporting"
         status = if ($workReportDue) { "emitted" } else { "not-due" }
-        latestBundlePath = $workReportBundlePath
-        latestReceiptPath = $workReportJsonPath
+        latestBundlePath = $latestWorkReportBundlePath
+        latestReceiptPath = $latestWorkReportReceiptPath
     },
     [ordered]@{
         id = "digest-surface"
         status = if ($digestDue) { "emitted" } else { "not-due" }
-        latestBundlePath = $digestBundlePath
-        latestReceiptPath = $digestJsonPath
+        latestBundlePath = $latestDigestBundlePath
+        latestReceiptPath = $latestDigestReceiptPath
     },
     [ordered]@{
         id = "promotion-watch"

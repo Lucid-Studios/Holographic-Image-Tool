@@ -97,6 +97,58 @@ public sealed partial class AutomationCycleTests
     }
 
     [Fact]
+    public void Automation_Cycle_Preserves_Latest_Digest_And_Work_Report_References_When_Not_Due()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var auditRoot = Path.Combine(tempDir, "audit");
+        var repoChecksHelper = WriteRepoChecksHelper(tempDir, "repo-checks-success.ps1", 0, "Repo checks succeeded.");
+
+        var firstResult = RunPowerShellScript(
+            Path.Combine(TestPaths.RepositoryRoot, "scripts", "Invoke-HdtAutomationCycle.ps1"),
+            "-DevelopmentPosture", "Closing",
+            "-ForceDigest",
+            "-AuditRoot", auditRoot,
+            "-RepoChecksScriptPath", repoChecksHelper);
+
+        firstResult.ExitCode.Should().Be(0, firstResult.ToString());
+
+        var secondResult = RunPowerShellScript(
+            Path.Combine(TestPaths.RepositoryRoot, "scripts", "Invoke-HdtAutomationCycle.ps1"),
+            "-DevelopmentPosture", "Closing",
+            "-AuditRoot", auditRoot,
+            "-RepoChecksScriptPath", repoChecksHelper);
+
+        secondResult.ExitCode.Should().Be(0, secondResult.ToString());
+
+        var cycleStatePath = Path.Combine(auditRoot, "state", "local-automation-cycle.json");
+        var taskingStatusPath = Path.Combine(auditRoot, "state", "local-automation-tasking-status.json");
+
+        using var cycleState = JsonDocument.Parse(File.ReadAllText(cycleStatePath));
+        using var taskingState = JsonDocument.Parse(File.ReadAllText(taskingStatusPath));
+
+        cycleState.RootElement.GetProperty("digestDisposition").GetString().Should().Be("skipped-not-due");
+        cycleState.RootElement.GetProperty("workReportDisposition").GetString().Should().Be("skipped-not-due");
+
+        var lastDigestBundlePath = cycleState.RootElement.GetProperty("lastDigestBundlePath").GetString();
+        var lastWorkReportBundlePath = cycleState.RootElement.GetProperty("lastWorkReportBundlePath").GetString();
+
+        lastDigestBundlePath.Should().NotBeNullOrWhiteSpace();
+        lastWorkReportBundlePath.Should().NotBeNullOrWhiteSpace();
+
+        var tasks = taskingState.RootElement.GetProperty("tasks").EnumerateArray().ToArray();
+        var workReportingTask = tasks.Single(task => task.GetProperty("id").GetString() == "work-reporting");
+        var digestSurfaceTask = tasks.Single(task => task.GetProperty("id").GetString() == "digest-surface");
+
+        workReportingTask.GetProperty("status").GetString().Should().Be("not-due");
+        workReportingTask.GetProperty("latestBundlePath").GetString().Should().Be(lastWorkReportBundlePath);
+        workReportingTask.GetProperty("latestReceiptPath").GetString().Should().Be(Path.Combine(lastWorkReportBundlePath!, "work-report.json"));
+
+        digestSurfaceTask.GetProperty("status").GetString().Should().Be("not-due");
+        digestSurfaceTask.GetProperty("latestBundlePath").GetString().Should().Be(lastDigestBundlePath);
+        digestSurfaceTask.GetProperty("latestReceiptPath").GetString().Should().Be(Path.Combine(lastDigestBundlePath!, "release-candidate-digest.json"));
+    }
+
+    [Fact]
     public void Automation_Cycle_Produces_Blocked_State_And_Failure_Receipts_When_Repo_Checks_Fail()
     {
         var tempDir = TestPaths.CreateTempDirectory();
