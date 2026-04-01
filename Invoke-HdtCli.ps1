@@ -14,5 +14,5 @@ param(
 )
 
 $project = Join-Path $PSScriptRoot "Hdt.Cli\Hdt.Cli.csproj"
-& dotnet run --project $project -- $Command @RemainingArgs
+& dotnet run --project $project --no-build --no-restore -- $Command @RemainingArgs
 exit $LASTEXITCODE

@@ -28,6 +28,28 @@ $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $solution = Join-Path $repoRoot "HolographicDataTool.sln"
 $testsProject = Join-Path $repoRoot "Hdt.Tests\Hdt.Tests.csproj"
+$repoLocalAppData = Join-Path $repoRoot ".nuget-appdata"
+$repoLocalNuGetDirectory = Join-Path $repoLocalAppData "NuGet"
+$repoLocalNuGetConfig = Join-Path $repoLocalNuGetDirectory "NuGet.Config"
+$userPackageCache = Join-Path $HOME ".nuget\packages"
+$effectivePackageCache = if (Test-Path $userPackageCache) { $userPackageCache } else { Join-Path $repoRoot ".nuget-packages" }
+
+New-Item -ItemType Directory -Force $repoLocalNuGetDirectory, $effectivePackageCache | Out-Null
+$env:APPDATA = $repoLocalAppData
+$env:NUGET_PACKAGES = $effectivePackageCache
+
+@"
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <config>
+    <add key="globalPackagesFolder" value="$effectivePackageCache" />
+  </config>
+  <packageSources>
+    <clear />
+  </packageSources>
+</configuration>
+"@ | Set-Content -Path $repoLocalNuGetConfig
+
 $postureCatalog = @{
     Initial = [pscustomobject]@{
         Description = "Exploratory local iteration on bounded hypotheses."
@@ -150,11 +172,15 @@ Assert-PostureRequirement -RequirementLabel "Phase 4 support comparison failure 
 Write-HdtPostureBanner -Name $DevelopmentPosture -Definition $posture
 
 Invoke-HdtStep -Label "Restore solution" -Action {
-    & dotnet restore $solution
+    # Keep restore inside repo-local config surfaces and serialize the graph
+    # walk, which is unstable in this sandbox when parallelized.
+    & dotnet restore $solution --configfile $repoLocalNuGetConfig -m:1 `
+        -p:RestoreUseStaticGraphEvaluation=false `
+        -p:RestoreDisableParallel=true
 }
 
 Invoke-HdtStep -Label "Build solution" -Action {
-    & dotnet build $solution --no-restore
+    & dotnet build $solution --no-restore -m:1
 }
 
 Invoke-HdtStep -Label "Run test suite" -Action {

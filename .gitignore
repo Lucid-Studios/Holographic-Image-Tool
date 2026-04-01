@@ -3,6 +3,8 @@ obj/
 .vs/
 TestResults/
 .audit/
+.nuget-appdata/
+.nuget-packages/
 .nuget-sandbox/
 .nuget-sandbox+/
 **/NuGet/Migrations/
