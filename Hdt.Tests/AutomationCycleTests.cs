@@ -350,6 +350,50 @@ public sealed partial class AutomationCycleTests
         missingResult.StandardError.Should().Contain("Required automation receipt file was not found");
     }
 
+    [Fact]
+    public void Automation_Receipt_Wrapper_Reports_Work_Report_Emission_Truthfully_When_Not_Due()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var auditRoot = Path.Combine(tempDir, "audit");
+        var repoChecksHelper = WriteRepoChecksHelper(tempDir, "repo-checks-success.ps1", 0, "Repo checks succeeded.");
+
+        var firstCycleResult = RunPowerShellScript(
+            Path.Combine(TestPaths.RepositoryRoot, "scripts", "Invoke-HdtAutomationCycle.ps1"),
+            "-DevelopmentPosture", "Closing",
+            "-ForceDigest",
+            "-AuditRoot", auditRoot,
+            "-RepoChecksScriptPath", repoChecksHelper);
+
+        firstCycleResult.ExitCode.Should().Be(0, firstCycleResult.ToString());
+
+        var secondCycleResult = RunPowerShellScript(
+            Path.Combine(TestPaths.RepositoryRoot, "scripts", "Invoke-HdtAutomationCycle.ps1"),
+            "-DevelopmentPosture", "Closing",
+            "-AuditRoot", auditRoot,
+            "-RepoChecksScriptPath", repoChecksHelper);
+
+        secondCycleResult.ExitCode.Should().Be(0, secondCycleResult.ToString());
+
+        var bundleTextResult = RunPowerShellScript(
+            Path.Combine(TestPaths.RepositoryRoot, "Show-HDTAutomationReceipt.ps1"),
+            "-View", "bundle",
+            "-AuditRoot", auditRoot);
+
+        bundleTextResult.ExitCode.Should().Be(0, bundleTextResult.ToString());
+        bundleTextResult.StandardOutput.Should().Contain("Work report emitted: False");
+
+        var bundleJsonResult = RunPowerShellScript(
+            Path.Combine(TestPaths.RepositoryRoot, "Show-HDTAutomationReceipt.ps1"),
+            "-View", "bundle",
+            "-Json",
+            "-AuditRoot", auditRoot);
+
+        bundleJsonResult.ExitCode.Should().Be(0, bundleJsonResult.ToString());
+
+        using var payload = JsonDocument.Parse(bundleJsonResult.StandardOutput);
+        payload.RootElement.GetProperty("bundle").GetProperty("manifest").GetProperty("workReport").GetProperty("emitted").GetBoolean().Should().BeFalse();
+    }
+
     private static string WriteRepoChecksHelper(string tempDir, string fileName, int exitCode, string message)
     {
         var helperPath = Path.Combine(tempDir, fileName);

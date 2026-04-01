@@ -102,7 +102,7 @@ Repo-local verification helpers:
 
 `Show-HDTAutomationStatus.ps1` is the public visibility wrapper for that lane. It reads the current `.audit` state surfaces and renders either operator-readable status text or combined JSON for the live cycle, tasking, and orchestration posture.
 
-`Show-HDTAutomationReceipt.ps1` is the public receipt wrapper for that lane. It reads the latest or requested release-candidate bundle and digest from `.audit/` and renders either operator-readable text or combined JSON for the emitted evidence surface.
+`Show-HDTAutomationReceipt.ps1` is the public receipt wrapper for that lane. It reads the latest or requested release-candidate bundle and digest from `.audit/` and renders either operator-readable text or combined JSON for the emitted evidence surface. When a newer cycle skips digest or work-report emission because cadence is not yet due, the wrapper still exposes the newer bundle while keeping the last emitted digest pinned and reporting `workReport.emitted` truthfully.
 
 The parent lane now also reconciles root standing against `OAN Tech Stack` and `Documentation Repo`, emits a local steward triad (`doping-header`, `receipt`, `notice`) into each release-candidate bundle, and emits a lighter work-report surface alongside the existing digest cadence.
 
@@ -110,7 +110,7 @@ The parent lane now also reconciles root standing against `OAN Tech Stack` and `
 
 `Invoke-HdtAutomationStatusSmoke.ps1` is the dedicated visibility smoke surface for the status wrapper. It verifies that operators can read the live `.audit` automation posture without opening raw state files directly.
 
-`Invoke-HdtAutomationReceiptSmoke.ps1` is the dedicated receipt smoke surface for the release-candidate and digest wrapper. It verifies that operators can read the emitted evidence bundles without opening raw bundle files directly.
+`Invoke-HdtAutomationReceiptSmoke.ps1` is the dedicated receipt smoke surface for the release-candidate and digest wrapper. It verifies that operators can read the emitted evidence bundles without opening raw bundle files directly, including the skipped-not-due path where the latest bundle advances before digest or work-report cadence is due.
 
 The Phase 3 smoke scripts now assert both JSON output and human-readable operator text for render and comparison paths, and they cover delayed, divergent, incompatible, and flattened-or-unsupported comparison outcomes through wrapper-backed artifact flows rather than validating only machine-readable branches.
 

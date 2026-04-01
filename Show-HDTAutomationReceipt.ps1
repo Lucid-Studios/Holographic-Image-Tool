@@ -81,6 +81,33 @@ function Get-OptionalValue {
     return [string]$property.Value
 }
 
+function Get-OptionalNestedBooleanValue {
+    param(
+        [Parameter(Mandatory = $true)]
+        [object]$InputObject,
+
+        [Parameter(Mandatory = $true)]
+        [string]$PropertyName,
+
+        [Parameter(Mandatory = $true)]
+        [string]$NestedPropertyName,
+
+        [bool]$DefaultValue = $false
+    )
+
+    $property = $InputObject.PSObject.Properties[$PropertyName]
+    if ($null -eq $property -or $null -eq $property.Value) {
+        return $DefaultValue
+    }
+
+    $nestedProperty = $property.Value.PSObject.Properties[$NestedPropertyName]
+    if ($null -eq $nestedProperty) {
+        return $DefaultValue
+    }
+
+    return [bool]$nestedProperty.Value
+}
+
 $cycleStatePath = Join-Path $resolvedAuditRoot "state\local-automation-cycle.json"
 $cycleState = Read-RequiredJson -Path $cycleStatePath
 
@@ -140,6 +167,7 @@ if ($Json) {
 
 switch ($View) {
     "bundle" {
+        $workReportEmitted = Get-OptionalNestedBooleanValue -InputObject $bundleReceipt -PropertyName "workReport" -NestedPropertyName "emitted"
         Add-Section -Title "HDT Automation Bundle" -Lines @(
             "Bundle id: $($bundleReceipt.bundleId)",
             "Status: $($bundleReceipt.status)",
@@ -152,7 +180,7 @@ switch ($View) {
             "Branch: $($bundleReceipt.git.branch)",
             "Worktree state: $($bundleReceipt.git.worktreeState)",
             "Digest emitted: $($bundleReceipt.digest.emitted)",
-            "Work report emitted: $((Get-OptionalValue -InputObject $bundleReceipt -PropertyName 'workReport') -ne '')",
+            "Work report emitted: $workReportEmitted",
             "Manifest path: $bundleManifestPath"
         )
     }
@@ -169,6 +197,7 @@ switch ($View) {
         )
     }
     default {
+        $workReportEmitted = Get-OptionalNestedBooleanValue -InputObject $bundleReceipt -PropertyName "workReport" -NestedPropertyName "emitted"
         Add-Section -Title "HDT Automation Bundle" -Lines @(
             "Bundle id: $($bundleReceipt.bundleId)",
             "Status: $($bundleReceipt.status)",
@@ -180,7 +209,7 @@ switch ($View) {
             "Repo checks exit code: $($bundleReceipt.repoChecks.exitCode)",
             "Branch: $($bundleReceipt.git.branch)",
             "Worktree state: $($bundleReceipt.git.worktreeState)",
-            "Work report emitted: $((Get-OptionalValue -InputObject $bundleReceipt -PropertyName 'workReport') -ne '')",
+            "Work report emitted: $workReportEmitted",
             "Manifest path: $bundleManifestPath"
         )
 

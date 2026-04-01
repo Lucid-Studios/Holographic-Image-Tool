@@ -68,10 +68,19 @@ try {
     $repoChecksHelper = Join-Path $tempDir "repo-checks-success.ps1"
     Write-RepoChecksHelper -Path $repoChecksHelper -ExitCode 0 -Message "Repo checks succeeded."
 
-    Invoke-HdtStep -Label "Run automation cycle for receipt smoke" -Action {
+    Invoke-HdtStep -Label "Run forced automation cycle for receipt smoke" -Action {
         & (Join-Path $repoRoot "scripts\Invoke-HdtAutomationCycle.ps1") `
             -DevelopmentPosture Closing `
             -ForceDigest `
+            -AuditRoot $auditRoot `
+            -RepoChecksScriptPath $repoChecksHelper
+    }
+
+    $firstCycleState = Read-Json -Path (Join-Path $auditRoot "state\local-automation-cycle.json")
+
+    Invoke-HdtStep -Label "Run immediate follow-up automation cycle" -Action {
+        & (Join-Path $repoRoot "scripts\Invoke-HdtAutomationCycle.ps1") `
+            -DevelopmentPosture Closing `
             -AuditRoot $auditRoot `
             -RepoChecksScriptPath $repoChecksHelper
     }
@@ -95,6 +104,10 @@ try {
         if ($rendered -notlike "*$($cycleState.lastBundleId)*") {
             throw "Automation receipt text output did not expose the latest bundle id."
         }
+
+        if ($rendered -notlike "*Work report emitted: False*") {
+            throw "Automation receipt text output did not expose the skipped-not-due work-report state truthfully."
+        }
     }
 
     Invoke-HdtStep -Label "Show automation receipt (json)" -Action {
@@ -111,6 +124,18 @@ try {
         if ($payload.digest.receipt.status -ne "candidate-ready") {
             throw "Automation receipt JSON did not expose the digest status."
         }
+
+        if ($payload.bundle.manifest.bundleId -ne $cycleState.lastBundleId) {
+            throw "Automation receipt JSON did not expose the latest bundle id."
+        }
+
+        if ($payload.bundle.manifest.workReport.emitted) {
+            throw "Automation receipt JSON did not preserve the skipped-not-due work-report state."
+        }
+
+        if ($payload.digest.receipt.bundleId -ne $firstCycleState.lastDigestBundleId) {
+            throw "Automation receipt JSON did not preserve the latest emitted digest receipt when the next cycle skipped digest emission."
+        }
     }
 
     Invoke-HdtStep -Label "Show automation receipt by explicit bundle id" -Action {
@@ -123,6 +148,10 @@ try {
 
         if ($payload.bundle.manifest.bundleId -ne $cycleState.lastBundleId) {
             throw "Automation receipt wrapper did not respect the explicit bundle id."
+        }
+
+        if ($payload.bundle.manifest.workReport.emitted) {
+            throw "Automation receipt wrapper did not preserve the skipped-not-due work-report state for the explicit bundle."
         }
     }
 }

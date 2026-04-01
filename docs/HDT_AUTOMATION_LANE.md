@@ -98,6 +98,11 @@ That wrapper can emit either:
 - operator-readable receipt text
 - combined JSON for the current release-candidate bundle and digest
 
+When a later cycle lands before digest or work-report cadence is due, the
+receipt wrapper still advances to the newest release-candidate bundle while
+preserving the last emitted digest reference and reporting the newer bundle's
+`workReport.emitted` state truthfully.
+
 The run receipts live under:
 
 - `.audit/runs/release-candidates/<bundle-id>/`
@@ -207,6 +212,9 @@ The cycle is verified in two ways:
 - the public receipt layer now has a dedicated smoke surface:
   - `scripts/Invoke-HdtAutomationReceiptSmoke.ps1`
 - dedicated automation-cycle tests verify success, blocked failure, and invalid audit-root fallback behavior without recursively calling `dotnet test` from inside `dotnet test`
+- receipt-wrapper coverage explicitly verifies the skipped-not-due path so the
+  public wrapper reports `workReport.emitted` truthfully and keeps the latest
+  emitted digest pinned until cadence says otherwise
 
 This keeps the lane honest:
 
