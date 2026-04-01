@@ -855,4 +855,60 @@ public sealed class ArtifactWorkflowTests
         committedDeferredComparison.Classification.Should().Be("DeferredSupport");
         committedRejectedComparison.Classification.Should().Be("RejectedSupport");
     }
+
+    [Fact]
+    public void Committed_Phase4_Reference_Artifacts_Preserve_Working_Intent_And_Support_Markers()
+    {
+        var repoRoot = TestPaths.RepositoryRoot;
+        var loader = new HopngArtifactLoader();
+
+        var lawfulPerspectival = loader.Load(Path.Combine(repoRoot, "examples", "phase4-perspectival-sample.hopng.json"));
+        var lawfulRestrictedPerspectival = loader.Load(Path.Combine(repoRoot, "examples", "phase4-restricted-perspectival.hopng.json"));
+        var lawfulDeferredPerspectival = loader.Load(Path.Combine(repoRoot, "examples", "phase4-deferred-perspectival.hopng.json"));
+        var lawfulParticipatory = loader.Load(Path.Combine(repoRoot, "examples", "phase4-participatory-sample.hopng.json"));
+        var lawfulRejectedParticipatory = loader.Load(Path.Combine(repoRoot, "examples", "phase4-rejected-participatory.hopng.json"));
+        var invalidPerspectival = loader.Load(Path.Combine(repoRoot, "examples", "phase4-invalid-perspectival.hopng.json"));
+        var invalidParticipatory = loader.Load(Path.Combine(repoRoot, "examples", "phase4-invalid-participatory.hopng.json"));
+
+        lawfulPerspectival.PerspectivalEngramSupport.Should().NotBeNull();
+        lawfulPerspectival.PerspectivalEngramSupport!.WorkingIntentState.Should().Be("supported_intent");
+        lawfulPerspectival.PerspectivalEngramSupport.IntentClassification.Should().Be("bounded_support_evidence");
+        lawfulPerspectival.PerspectivalEngramSupport.SupportShape.Should().Be("root_constructor_support");
+
+        lawfulRestrictedPerspectival.PerspectivalEngramSupport.Should().NotBeNull();
+        lawfulRestrictedPerspectival.PerspectivalEngramSupport!.WorkingIntentState.Should().Be("restricted_support");
+        lawfulRestrictedPerspectival.PerspectivalEngramSupport.IntentClassification.Should().Be("restricted_support_evidence");
+        lawfulRestrictedPerspectival.PerspectivalEngramSupport.SupportShape.Should().Be("root_constructor_support");
+        lawfulRestrictedPerspectival.PerspectivalEngramSupport.RestrictionReason.Should().NotBeNullOrWhiteSpace();
+
+        lawfulDeferredPerspectival.PerspectivalEngramSupport.Should().NotBeNull();
+        lawfulDeferredPerspectival.PerspectivalEngramSupport!.WorkingIntentState.Should().Be("deferred_support");
+        lawfulDeferredPerspectival.PerspectivalEngramSupport.IntentClassification.Should().Be("deferred_support_evidence");
+        lawfulDeferredPerspectival.PerspectivalEngramSupport.SupportShape.Should().Be("root_constructor_support");
+        lawfulDeferredPerspectival.PerspectivalEngramSupport.DeferReason.Should().NotBeNullOrWhiteSpace();
+
+        lawfulParticipatory.ParticipatoryEngramSupport.Should().NotBeNull();
+        lawfulParticipatory.ParticipatoryEngramSupport!.WorkingIntentState.Should().Be("reviewable_support");
+        lawfulParticipatory.ParticipatoryEngramSupport.IntentClassification.Should().Be("reviewable_support_evidence");
+        lawfulParticipatory.ParticipatoryEngramSupport.SupportShape.Should().Be("branch_set_support");
+        lawfulParticipatory.ParticipatoryEngramSupport.Phase5HandoffReady.Should().BeTrue();
+
+        lawfulRejectedParticipatory.ParticipatoryEngramSupport.Should().NotBeNull();
+        lawfulRejectedParticipatory.ParticipatoryEngramSupport!.WorkingIntentState.Should().Be("rejected_support");
+        lawfulRejectedParticipatory.ParticipatoryEngramSupport.IntentClassification.Should().Be("rejected_support_evidence");
+        lawfulRejectedParticipatory.ParticipatoryEngramSupport.SupportShape.Should().Be("branch_set_support");
+        lawfulRejectedParticipatory.ParticipatoryEngramSupport.RejectionReason.Should().NotBeNullOrWhiteSpace();
+
+        invalidPerspectival.PerspectivalEngramSupport.Should().NotBeNull();
+        invalidPerspectival.PerspectivalEngramSupport!.WorkingIntentState.Should().Be("reviewable_support");
+        invalidPerspectival.PerspectivalEngramSupport.IntentClassification.Should().Be("reviewable_support_evidence");
+        invalidPerspectival.PerspectivalEngramSupport.SupportShape.Should().Be("root_constructor_support");
+        invalidPerspectival.PerspectivalEngramSupport.SupportOnly.Should().BeFalse();
+
+        invalidParticipatory.ParticipatoryEngramSupport.Should().NotBeNull();
+        invalidParticipatory.ParticipatoryEngramSupport!.WorkingIntentState.Should().Be("structured_intent");
+        invalidParticipatory.ParticipatoryEngramSupport.IntentClassification.Should().Be("typed_support_claim");
+        invalidParticipatory.ParticipatoryEngramSupport.SupportShape.Should().Be("branch_set_support");
+        invalidParticipatory.ParticipatoryEngramSupport.ParticipantBranches.Should().ContainSingle();
+    }
 }

@@ -212,6 +212,20 @@ Its lawful maturity should therefore move through the Phase 4 working-intent sta
 
 The current executable Phase 4 support sidecars also require machine-checked `intentClassification` and `supportShape` markers so this profile can stay aligned with actual validator behavior rather than drifting into doc-only language.
 
+### Current Phase 4 Marker Mapping
+
+For the active support-only Phase 4 bridge, `engram_root_constructor_capture` currently aligns to the machine-checked support markers this way:
+
+- perspectival support artifacts use `supportShape = root_constructor_support`
+- participatory support artifacts use `supportShape = branch_set_support`
+- `workingIntentState = supported_intent` maps to `intentClassification = bounded_support_evidence`
+- `workingIntentState = reviewable_support` maps to `intentClassification = reviewable_support_evidence`
+- `workingIntentState = restricted_support` maps to `intentClassification = restricted_support_evidence`
+- `workingIntentState = deferred_support` maps to `intentClassification = deferred_support_evidence`
+- `workingIntentState = rejected_support` maps to `intentClassification = rejected_support_evidence`
+
+These markers are not just descriptive. The committed Phase 4 corpus, Prime-safe inspection summaries, validation rules, and support-comparison path all depend on them staying aligned.
+
 ### Validation Target
 
 The artifact should support validation of:
