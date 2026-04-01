@@ -3,6 +3,9 @@ obj/
 .vs/
 TestResults/
 .audit/
+.nuget-sandbox/
+.nuget-sandbox+/
+**/NuGet/Migrations/
 examples/**/*.ed25519.private.key
 examples/**/*.private.public.key
 examples/manual*
