@@ -2,6 +2,7 @@ using FluentAssertions;
 using Hdt.Tests.TestSupport;
 using System.Diagnostics;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 
 namespace Hdt.Tests;
@@ -253,6 +254,7 @@ public sealed partial class AutomationCycleTests
         textResult.StandardOutput.Should().Contain("HDT Automation Tasking");
         textResult.StandardOutput.Should().Contain("HDT Automation Orchestration");
         textResult.StandardOutput.Should().Contain("Status: candidate-ready");
+        textResult.StandardOutput.Should().Contain("Current observed git worktree state:");
 
         var jsonResult = RunPowerShellScript(
             Path.Combine(TestPaths.RepositoryRoot, "Show-HDTAutomationStatus.ps1"),
@@ -266,6 +268,11 @@ public sealed partial class AutomationCycleTests
         payload.RootElement.GetProperty("summary").GetProperty("status").GetString().Should().Be("candidate-ready");
         payload.RootElement.GetProperty("tasking").GetProperty("tasks").GetArrayLength().Should().BeGreaterThan(0);
         payload.RootElement.GetProperty("orchestration").GetProperty("publishReady").ValueKind.Should().BeOneOf(JsonValueKind.True, JsonValueKind.False);
+        payload.RootElement.GetProperty("currentObservation").GetProperty("worktreeState").GetString().Should().NotBeNullOrWhiteSpace();
+        payload.RootElement.GetProperty("currentObservation").GetProperty("emittedWorktreeState").GetString()
+            .Should().Be(payload.RootElement.GetProperty("orchestration").GetProperty("worktreeState").GetString());
+        payload.RootElement.GetProperty("currentObservation").GetProperty("divergesFromEmittedState").ValueKind
+            .Should().BeOneOf(JsonValueKind.True, JsonValueKind.False);
     }
 
     [Fact]
@@ -362,6 +369,61 @@ public sealed partial class AutomationCycleTests
 
         missingResult.ExitCode.Should().Be(1, missingResult.ToString());
         missingResult.StandardError.Should().Contain("Required automation receipt file was not found");
+    }
+
+    [Fact]
+    public void Automation_Status_Wrapper_Reports_Divergence_When_Current_Git_View_Differs_From_Emitted_State()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var auditRoot = Path.Combine(tempDir, "audit");
+        var repoChecksHelper = WriteRepoChecksHelper(tempDir, "repo-checks-success.ps1", 0, "Repo checks succeeded.");
+
+        var cycleResult = RunPowerShellScript(
+            Path.Combine(TestPaths.RepositoryRoot, "scripts", "Invoke-HdtAutomationCycle.ps1"),
+            "-DevelopmentPosture", "Closing",
+            "-ForceDigest",
+            "-AuditRoot", auditRoot,
+            "-RepoChecksScriptPath", repoChecksHelper);
+
+        cycleResult.ExitCode.Should().Be(0, cycleResult.ToString());
+
+        var orchestrationStatusPath = Path.Combine(auditRoot, "state", "master-thread-orchestration-status.json");
+        var orchestrationNode = JsonNode.Parse(File.ReadAllText(orchestrationStatusPath))!.AsObject();
+        var emittedWorktreeState = orchestrationNode["worktreeState"]!.GetValue<string>();
+        var requiredWorktreeState = orchestrationNode["requiredWorktreeState"]!.GetValue<string>();
+        var flippedWorktreeState = emittedWorktreeState == "clean" ? "dirty" : "clean";
+        var branchAligned = orchestrationNode["branchAligned"]!.GetValue<bool>();
+        var worktreeAligned = flippedWorktreeState == requiredWorktreeState;
+        var publishReady = branchAligned && worktreeAligned;
+
+        orchestrationNode["worktreeState"] = flippedWorktreeState;
+        orchestrationNode["worktreeAligned"] = worktreeAligned;
+        orchestrationNode["publishReady"] = publishReady;
+
+        var reasons = new JsonArray();
+        if (!worktreeAligned)
+        {
+            reasons.Add($"Current worktree state '{flippedWorktreeState}' does not match required worktree state '{requiredWorktreeState}'.");
+        }
+
+        orchestrationNode["reasons"] = reasons;
+        File.WriteAllText(
+            orchestrationStatusPath,
+            orchestrationNode.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+
+        var jsonResult = RunPowerShellScript(
+            Path.Combine(TestPaths.RepositoryRoot, "Show-HDTAutomationStatus.ps1"),
+            "-View", "all",
+            "-Json",
+            "-AuditRoot", auditRoot);
+
+        jsonResult.ExitCode.Should().Be(0, jsonResult.ToString());
+
+        using var payload = JsonDocument.Parse(jsonResult.StandardOutput);
+        var currentObservation = payload.RootElement.GetProperty("currentObservation");
+        currentObservation.GetProperty("divergesFromEmittedState").GetBoolean().Should().BeTrue();
+        currentObservation.GetProperty("emittedWorktreeState").GetString().Should().Be(flippedWorktreeState);
+        currentObservation.GetProperty("note").GetString().Should().Contain("differs from the last emitted .audit orchestration surface");
     }
 
     [Fact]

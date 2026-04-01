@@ -87,6 +87,10 @@ That wrapper can emit either:
 - operator-readable status text
 - combined JSON for the current cycle, tasking, and orchestration posture
 
+When the repo branch or worktree changes after the last emitted cycle, the
+status wrapper also overlays a live current-observation git view so operators
+can see drift without forcing an out-of-cadence release-candidate bundle.
+
 The public receipt wrapper for the latest or requested emitted evidence is:
 
 ```powershell

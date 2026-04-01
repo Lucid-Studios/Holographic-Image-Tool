@@ -42,6 +42,10 @@ Invoke-HdtStep -Label "Show automation summary (text)" -Action {
     if ($rendered -notlike "*HDT Automation Orchestration*") {
         throw "Automation status text output did not contain the orchestration header."
     }
+
+    if ($rendered -notlike "*Current observed git worktree state:*") {
+        throw "Automation status text output did not expose the live observed git worktree state."
+    }
 }
 
 Invoke-HdtStep -Label "Show automation summary (json)" -Action {
@@ -58,6 +62,10 @@ Invoke-HdtStep -Label "Show automation summary (json)" -Action {
 
     if ($null -eq $payload.orchestration.publishReady) {
         throw "Automation status JSON did not include orchestration posture."
+    }
+
+    if ($null -eq $payload.currentObservation) {
+        throw "Automation status JSON did not include the live current-observation overlay."
     }
 }
 

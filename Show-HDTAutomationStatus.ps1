@@ -79,16 +79,91 @@ function Get-OptionalValue {
     return [string]$property.Value
 }
 
+function Get-LiveGitObservation {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $true)]
+        [string]$RequiredPublishedBranch,
+
+        [Parameter(Mandatory = $true)]
+        [string]$RequiredWorktreeState,
+
+        [Parameter(Mandatory = $true)]
+        [string]$EmittedBranch,
+
+        [Parameter(Mandatory = $true)]
+        [string]$EmittedWorktreeState
+    )
+
+    $branch = (& git -C $RepoRoot rev-parse --abbrev-ref HEAD 2>$null | Out-String).Trim()
+    $gitAvailable = ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($branch))
+    if (-not $gitAvailable) {
+        $branch = "unknown"
+    }
+
+    $statusLines = @(& git -C $RepoRoot status --short 2>$null)
+    if ($LASTEXITCODE -ne 0) {
+        $statusLines = @()
+        $gitAvailable = $false
+    }
+
+    $worktreeState = if ($gitAvailable -and $statusLines.Count -eq 0) { "clean" } elseif ($gitAvailable) { "dirty" } else { "unknown" }
+    $branchAligned = $gitAvailable -and ($branch -eq $RequiredPublishedBranch)
+    $worktreeAligned = $gitAvailable -and ($worktreeState -eq $RequiredWorktreeState)
+    $publishReady = $branchAligned -and $worktreeAligned
+    $divergesFromEmittedBranch = $branch -ne $EmittedBranch
+    $divergesFromEmittedWorktreeState = $worktreeState -ne $EmittedWorktreeState
+    $divergesFromEmittedState = $divergesFromEmittedBranch -or $divergesFromEmittedWorktreeState
+
+    $note = if (-not $gitAvailable) {
+        "Current repo observation is unavailable; the wrapper is showing the last emitted .audit state only."
+    }
+    elseif ($divergesFromEmittedState) {
+        "Current repo observation differs from the last emitted .audit orchestration surface; refresh the cycle when cadence or intake lawfully requires."
+    }
+    else {
+        "Current repo observation matches the last emitted .audit orchestration surface."
+    }
+
+    return [ordered]@{
+        available = $gitAvailable
+        observedUtc = [DateTime]::UtcNow.ToString("o")
+        branch = $branch
+        worktreeState = $worktreeState
+        requiredPublishedBranch = $RequiredPublishedBranch
+        requiredWorktreeState = $RequiredWorktreeState
+        branchAligned = $branchAligned
+        worktreeAligned = $worktreeAligned
+        publishReady = $publishReady
+        divergesFromEmittedBranch = $divergesFromEmittedBranch
+        divergesFromEmittedWorktreeState = $divergesFromEmittedWorktreeState
+        divergesFromEmittedState = $divergesFromEmittedState
+        emittedBranch = $EmittedBranch
+        emittedWorktreeState = $EmittedWorktreeState
+        statusLineCount = $statusLines.Count
+        note = $note
+    }
+}
+
 $stateRoot = Join-Path $resolvedAuditRoot "state"
 $cycleState = Read-RequiredJson -Path (Join-Path $stateRoot "local-automation-cycle.json")
 $taskingState = Read-RequiredJson -Path (Join-Path $stateRoot "local-automation-tasking-status.json")
 $orchestrationState = Read-RequiredJson -Path (Join-Path $stateRoot "master-thread-orchestration-status.json")
+$currentObservation = Get-LiveGitObservation `
+    -RepoRoot $repoRoot `
+    -RequiredPublishedBranch $orchestrationState.requiredPublishedBranch `
+    -RequiredWorktreeState $orchestrationState.requiredWorktreeState `
+    -EmittedBranch $orchestrationState.branch `
+    -EmittedWorktreeState $orchestrationState.worktreeState
 
 $payload = [ordered]@{
     auditRoot = $resolvedAuditRoot
     summary = $cycleState
     tasking = $taskingState
     orchestration = $orchestrationState
+    currentObservation = $currentObservation
 }
 
 if ($Json) {
@@ -123,7 +198,12 @@ switch ($View) {
             "Next recommended release-candidate run UTC: $($cycleState.nextRecommendedReleaseCandidateRunUtc)",
             "Next mandatory HITL digest run UTC: $($cycleState.nextMandatoryHitlDigestRunUtc)",
             "Git branch: $($cycleState.git.branch)",
-            "Git worktree state: $($cycleState.git.worktreeState)"
+            "Git worktree state (last emitted): $($cycleState.git.worktreeState)",
+            "Current observed git branch: $($currentObservation.branch)",
+            "Current observed git worktree state: $($currentObservation.worktreeState)",
+            "Current observed publish ready: $($currentObservation.publishReady)",
+            "Current observation diverges from emitted state: $($currentObservation.divergesFromEmittedState)",
+            "Observation note: $($currentObservation.note)"
         )
     }
     "tasking" {
@@ -150,10 +230,15 @@ switch ($View) {
         Add-Section -Title "HDT Automation Orchestration" -Lines @(
             "Cycle status: $($orchestrationState.cycleStatus)",
             "Current branch: $($orchestrationState.branch)",
-            "Current worktree state: $($orchestrationState.worktreeState)",
+            "Current worktree state (last emitted): $($orchestrationState.worktreeState)",
             "Required published branch: $($orchestrationState.requiredPublishedBranch)",
             "Required worktree state: $($orchestrationState.requiredWorktreeState)",
             "Advisory publish ready: $($orchestrationState.publishReady)",
+            "Current observed branch: $($currentObservation.branch)",
+            "Current observed worktree state: $($currentObservation.worktreeState)",
+            "Current observed publish ready: $($currentObservation.publishReady)",
+            "Current observation diverges from emitted state: $($currentObservation.divergesFromEmittedState)",
+            "Observation note: $($currentObservation.note)",
             "Reasons: $reasonText"
         )
     }
@@ -169,7 +254,9 @@ switch ($View) {
             "Work report disposition: $(Get-OptionalValue -InputObject $cycleState -PropertyName 'workReportDisposition')",
             "Next recommended work report run UTC: $(Get-OptionalValue -InputObject $cycleState -PropertyName 'nextRecommendedWorkReportRunUtc')",
             "Next recommended release-candidate run UTC: $($cycleState.nextRecommendedReleaseCandidateRunUtc)",
-            "Next mandatory HITL digest run UTC: $($cycleState.nextMandatoryHitlDigestRunUtc)"
+            "Next mandatory HITL digest run UTC: $($cycleState.nextMandatoryHitlDigestRunUtc)",
+            "Current observed git worktree state: $($currentObservation.worktreeState)",
+            "Current observation diverges from emitted state: $($currentObservation.divergesFromEmittedState)"
         )
 
         $taskLines = @()
@@ -186,8 +273,13 @@ switch ($View) {
         }
         Add-Section -Title "HDT Automation Orchestration" -Lines @(
             "Current branch: $($orchestrationState.branch)",
-            "Current worktree state: $($orchestrationState.worktreeState)",
+            "Current worktree state (last emitted): $($orchestrationState.worktreeState)",
             "Advisory publish ready: $($orchestrationState.publishReady)",
+            "Current observed branch: $($currentObservation.branch)",
+            "Current observed worktree state: $($currentObservation.worktreeState)",
+            "Current observed publish ready: $($currentObservation.publishReady)",
+            "Current observation diverges from emitted state: $($currentObservation.divergesFromEmittedState)",
+            "Observation note: $($currentObservation.note)",
             "Reasons: $reasonText"
         )
     }

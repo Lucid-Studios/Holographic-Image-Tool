@@ -101,6 +101,7 @@ Repo-local verification helpers:
 `Invoke-HdtAutomationCycle.ps1` is now the parent HDT-local automation lane. It wraps the posture-aware repo checks, writes release-candidate and digest bundles into `.audit/`, and keeps the live automation state, tasking, and orchestration surfaces current.
 
 `Show-HDTAutomationStatus.ps1` is the public visibility wrapper for that lane. It reads the current `.audit` state surfaces and renders either operator-readable status text or combined JSON for the live cycle, tasking, and orchestration posture.
+It also overlays the current observed git branch and worktree state so operators can see when the repo has drifted from the last emitted `.audit` bundle without forcing an out-of-cadence cycle refresh.
 
 `Show-HDTAutomationReceipt.ps1` is the public receipt wrapper for that lane. It reads the latest or requested release-candidate bundle and digest from `.audit/` and renders either operator-readable text or combined JSON for the emitted evidence surface. When a newer cycle skips digest or work-report emission because cadence is not yet due, the wrapper still exposes the newer bundle while keeping the last emitted digest pinned and reporting `workReport.emitted` truthfully.
 
