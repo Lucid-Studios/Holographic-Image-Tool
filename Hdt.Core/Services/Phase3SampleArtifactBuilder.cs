@@ -267,7 +267,8 @@ public sealed class Phase3SampleArtifactBuilder
         };
         _jsonStore.WriteCanonical(artifact.Layout.ManifestPath, manifest);
 
-        return RefreshIntegrity(artifact);
+        var signingKeyPath = ResolveSigningKeyPath(request, artifact.Layout.PrivateKeyPath);
+        return RefreshIntegrity(artifact, signingKeyPath);
     }
 
     private static PhaseSliceSet ApplyVariant(PhaseSliceSet phaseSliceSet, Phase3SampleVariant variant) =>
@@ -436,7 +437,7 @@ public sealed class Phase3SampleArtifactBuilder
         };
     }
 
-    private LoadedHopngArtifact RefreshIntegrity(LoadedHopngArtifact artifact)
+    private LoadedHopngArtifact RefreshIntegrity(LoadedHopngArtifact artifact, string privateKeyPath)
     {
         var current = _loader.Load(artifact.Layout.ManifestPath);
         var refreshedDigests = current.Manifest.FileDigests
@@ -463,7 +464,7 @@ public sealed class Phase3SampleArtifactBuilder
         _jsonStore.WriteCanonical(current.Layout.HashPath, hashSidecar);
 
         var signatureService = new Ed25519SignatureService();
-        var privateKey = File.ReadAllText(current.Layout.PrivateKeyPath).Trim();
+        var privateKey = File.ReadAllText(privateKeyPath).Trim();
         var hashBytes = File.ReadAllBytes(current.Layout.HashPath);
         var signature = signatureService.Sign(privateKey, hashBytes);
         var signatureSidecar = current.SignatureSidecar with
@@ -475,6 +476,11 @@ public sealed class Phase3SampleArtifactBuilder
 
         return _loader.Load(current.Layout.ManifestPath);
     }
+
+    private static string ResolveSigningKeyPath(NewHopngRequest request, string defaultPrivateKeyPath) =>
+        !string.IsNullOrWhiteSpace(request.PrivateKeyPath)
+            ? request.PrivateKeyPath
+            : request.PrivateKeyOutputPath ?? defaultPrivateKeyPath;
 
     private static EventSlice EventSlice(
         string artifactId,

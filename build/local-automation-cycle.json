@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "defaultDevelopmentPosture": "Closing",
+  "manualFirst": true,
+  "schedulerReady": true,
+  "stewardModelVersion": 1,
+  "workReportCadenceHours": 1,
+  "localReleaseCandidateCadenceHours": 6,
+  "mandatoryHitlDigestCadenceHours": 24,
+  "workReportOutputRoot": ".audit/runs/work-reports",
+  "releaseCandidateOutputRoot": ".audit/runs/release-candidates",
+  "digestOutputRoot": ".audit/runs/release-digests",
+  "statePath": ".audit/state/local-automation-cycle.json",
+  "taskingStatusJsonPath": ".audit/state/local-automation-tasking-status.json",
+  "taskingStatusMarkdownPath": ".audit/state/local-automation-tasking-status.md",
+  "masterThreadOrchestrationStatusJsonPath": ".audit/state/master-thread-orchestration-status.json",
+  "masterThreadOrchestrationStatusMarkdownPath": ".audit/state/master-thread-orchestration-status.md",
+  "operatorContinuityInstructionsPath": "docs/OPERATOR_CONTINUITY_INSTRUCTIONS.md",
+  "repoChecksScriptPath": "scripts/Invoke-HdtRepoChecks.ps1",
+  "mechanicalContinuationStatuses": [
+    "candidate-ready",
+    "hitl-required"
+  ],
+  "blockedStatus": "blocked",
+  "statusPolicy": {
+    "candidateReadyPostures": [
+      "Initial",
+      "Formal",
+      "Closing"
+    ],
+    "hitlRequiredPostures": [
+      "Approved"
+    ]
+  },
+  "advisoryOrchestration": {
+    "requiredPublishedBranch": "main",
+    "requiredWorktreeState": "clean"
+  },
+  "rootStanding": {
+    "laneName": "HDT Local Automation Lane",
+    "oanTechStackRoot": "D:\\OAN Tech Stack",
+    "documentationRepoRoot": "D:\\Documentation Repo",
+    "laneWriteRoot": "__REPO_ROOT__",
+    "oanTargetSurface": "D:\\OAN Tech Stack",
+    "documentationSourceSet": [
+      "D:\\Documentation Repo\\architecture\\oan-tech-stack-build-interlace-summary.md"
+    ],
+    "approvedDocumentationFeeds": [],
+    "admittedWriteRoots": [
+      "__REPO_ROOT__",
+      "__AUDIT_ROOT__"
+    ],
+    "verificationCommands": [
+      ".\\scripts\\Invoke-HdtRepoChecks.ps1 -DevelopmentPosture Closing"
+    ],
+    "contractBarriers": [
+      "Governance widening remains HITL-governed.",
+      "Final build admission remains outside the HDT local lane.",
+      "Writes remain bounded to admitted roots."
+    ],
+    "completionTarget": "The HDT local automation lane is lawfully complete when its operator surface, receipt surface, and bounded verification chain are executable and receipted for the intended OAN Tech Stack environment, with only human-governed admission or promotion remaining."
+  },
+  "stewardModel": {
+    "currentStage": "S1 WitnessSteward",
+    "canonicalLoop": [
+      "reconcile-root-standing",
+      "compile",
+      "classify",
+      "judge",
+      "promote-when-lawful",
+      "emit-receipts-and-notices",
+      "continue-unless-stop-condition"
+    ]
+  },
+  "interlacedBoundary": "HDT local automation strengthens local artifact evidence, validation, inspection, and comparison without claiming wider-stack promotion or runtime authority."
+}

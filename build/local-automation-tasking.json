@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 1,
+  "formalSurfaceMarkdownPath": "docs/HDT_AUTOMATION_LANE.md",
+  "statusJsonPath": ".audit/state/local-automation-tasking-status.json",
+  "statusMarkdownPath": ".audit/state/local-automation-tasking-status.md",
+  "activeTaskMapId": "hdt-automation-lane-v1",
+  "tasks": [
+    {
+      "id": "root-standing-reconciliation",
+      "label": "Root Standing Reconciliation",
+      "taskClass": "standing-reconciliation",
+      "owner": "Automation",
+      "authority": "Mechanical only",
+      "purpose": "Reconcile OAN Tech Stack standing, Documentation Repo source-law, admitted write roots, and the local audit state before new work begins.",
+      "completionSignal": "The live cycle state records current root availability, admitted write roots, and the lane standing snapshot for the run.",
+      "outputs": [
+        ".audit/state/local-automation-cycle.json",
+        ".audit/runs/release-candidates/"
+      ],
+      "escalatesWhen": [
+        "required roots cannot be read",
+        "root standing cannot be reconciled coherently"
+      ]
+    },
+    {
+      "id": "repo-check-cycle",
+      "label": "Repo Check Cycle",
+      "taskClass": "mechanical-verification",
+      "owner": "Automation",
+      "authority": "Mechanical only",
+      "purpose": "Run the posture-aware repo check primitive and record a bounded evidence bundle.",
+      "completionSignal": "The latest release-candidate bundle contains repo-check and git-worktree receipts.",
+      "outputs": [
+        ".audit/runs/release-candidates/",
+        ".audit/state/local-automation-cycle.json"
+      ],
+      "escalatesWhen": [
+        "repo checks fail",
+        "cycle receipts cannot be written"
+      ]
+    },
+    {
+      "id": "triad-emission",
+      "label": "Triad Emission",
+      "taskClass": "steward-governance",
+      "owner": "Automation",
+      "authority": "Mechanical only",
+      "purpose": "Emit the doping header, receipt, and notice that condition the run, record what happened, and signal downstream assumptions.",
+      "completionSignal": "The latest release-candidate bundle contains the emitted triad in both JSON and Markdown form.",
+      "outputs": [
+        ".audit/runs/release-candidates/"
+      ],
+      "escalatesWhen": [
+        "triad artifacts cannot be written",
+        "standing cannot be expressed lawfully for the run"
+      ]
+    },
+    {
+      "id": "work-reporting",
+      "label": "Work Reporting",
+      "taskClass": "progress-reporting",
+      "owner": "Automation",
+      "authority": "Mechanical only",
+      "purpose": "Emit the lighter steward work report when the report cadence is due, forced, or the lane posture changes materially.",
+      "completionSignal": "The latest work-report bundle contains work-report.json and work-report.md when the report window is due.",
+      "outputs": [
+        ".audit/runs/work-reports/"
+      ],
+      "escalatesWhen": [
+        "work report output cannot be written",
+        "the report surface becomes incoherent"
+      ]
+    },
+    {
+      "id": "digest-surface",
+      "label": "Digest Surface",
+      "taskClass": "review-preparation",
+      "owner": "Automation",
+      "authority": "Mechanical only",
+      "purpose": "Emit an operator-readable digest when the digest window is due, forced, or the posture changes materially.",
+      "completionSignal": "The latest digest bundle contains release-candidate-digest.json and release-candidate-digest.md.",
+      "outputs": [
+        ".audit/runs/release-digests/",
+        ".audit/state/local-automation-tasking-status.md"
+      ],
+      "escalatesWhen": [
+        "digest output cannot be written",
+        "digest classification becomes blocked"
+      ]
+    },
+    {
+      "id": "promotion-watch",
+      "label": "Promotion Watch",
+      "taskClass": "governance-watch",
+      "owner": "Shared",
+      "authority": "Automation may classify; HITL decides adoption",
+      "purpose": "Track whether the latest local cycle can continue mechanically, now owes HITL review, or is blocked.",
+      "completionSignal": "The current cycle posture is reflected in the live tasking status surfaces.",
+      "outputs": [
+        ".audit/state/local-automation-tasking-status.json",
+        ".audit/state/local-automation-tasking-status.md"
+      ],
+      "escalatesWhen": [
+        "cycle status becomes hitl-required",
+        "cycle status becomes blocked"
+      ]
+    },
+    {
+      "id": "orchestration-status",
+      "label": "Orchestration Status",
+      "taskClass": "orchestration",
+      "owner": "Automation",
+      "authority": "Advisory only",
+      "purpose": "Record branch, worktree, and later handoff eligibility without turning those signals into v1 blocking conditions.",
+      "completionSignal": "The orchestration status surfaces reflect the current branch, worktree state, and advisory publish readiness.",
+      "outputs": [
+        ".audit/state/master-thread-orchestration-status.json",
+        ".audit/state/master-thread-orchestration-status.md"
+      ],
+      "escalatesWhen": [
+        "branch or worktree visibility cannot be determined",
+        "orchestration status cannot be written"
+      ]
+    }
+  ]
+}

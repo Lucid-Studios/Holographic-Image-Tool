@@ -591,4 +591,268 @@ public sealed class ArtifactWorkflowTests
         comparison.ClassificationReason.Should().Contain("primary comparison horizon basis differs");
         comparison.BasisSignals.Should().Contain(signal => signal.Contains("primary comparison horizon basis differs", StringComparison.Ordinal));
     }
+
+    [Fact]
+    public void Phase4_Perspectival_Support_Artifact_Passes_Validation()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var artifact = Phase4ArtifactFactory.CreatePerspectivalSupport(tempDir, "phase4-perspectival");
+
+        var validation = new HopngArtifactValidator().Validate(artifact.Layout.ManifestPath);
+
+        validation.IsValid.Should().BeTrue();
+        artifact.PerspectivalEngramSupport.Should().NotBeNull();
+        artifact.ParticipatoryEngramSupport.Should().BeNull();
+    }
+
+    [Fact]
+    public void Phase4_Participatory_Support_Artifact_Passes_Validation()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var artifact = Phase4ArtifactFactory.CreateParticipatorySupport(tempDir, "phase4-participatory");
+
+        var validation = new HopngArtifactValidator().Validate(artifact.Layout.ManifestPath);
+
+        validation.IsValid.Should().BeTrue();
+        artifact.ParticipatoryEngramSupport.Should().NotBeNull();
+        artifact.PerspectivalEngramSupport.Should().BeNull();
+    }
+
+    [Fact]
+    public void Phase4_Restricted_And_Deferred_And_Rejected_Support_Artifacts_Pass_Validation()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var restrictedArtifact = Phase4ArtifactFactory.CreateRestrictedPerspectivalSupport(tempDir, "phase4-restricted");
+        var deferredArtifact = Phase4ArtifactFactory.CreateDeferredPerspectivalSupport(tempDir, "phase4-deferred");
+        var rejectedArtifact = Phase4ArtifactFactory.CreateRejectedParticipatorySupport(tempDir, "phase4-rejected");
+        var validator = new HopngArtifactValidator();
+
+        var restrictedValidation = validator.Validate(restrictedArtifact.Layout.ManifestPath);
+        var deferredValidation = validator.Validate(deferredArtifact.Layout.ManifestPath);
+        var rejectedValidation = validator.Validate(rejectedArtifact.Layout.ManifestPath);
+
+        restrictedValidation.IsValid.Should().BeTrue();
+        deferredValidation.IsValid.Should().BeTrue();
+        rejectedValidation.IsValid.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Phase4_Validation_Fails_When_Perspectival_Support_Overclaims_Authority()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var artifact = Phase4ArtifactFactory.CreateInvalidPerspectivalSupport(tempDir, "phase4-perspectival-invalid");
+
+        var validation = new HopngArtifactValidator().Validate(artifact.Layout.ManifestPath);
+
+        validation.IsValid.Should().BeFalse();
+        validation.Errors.Should().Contain(issue => issue.Code == ValidationErrorCode.InvalidPerspectivalEngram);
+    }
+
+    [Fact]
+    public void Phase4_Validation_Fails_When_Participatory_Support_Breaks_Handoff_And_Branch_Rules()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var artifact = Phase4ArtifactFactory.CreateInvalidParticipatorySupport(tempDir, "phase4-participatory-invalid");
+
+        var validation = new HopngArtifactValidator().Validate(artifact.Layout.ManifestPath);
+
+        validation.IsValid.Should().BeFalse();
+        validation.Errors.Should().Contain(issue => issue.Code == ValidationErrorCode.InvalidParticipatoryEngram);
+    }
+
+    [Fact]
+    public void Phase4_Comparison_Classifies_Perspectival_Peer_As_Strengthened_Support()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var leftArtifact = Phase4ArtifactFactory.CreatePerspectivalSupport(tempDir, "phase4-perspectival-left");
+        var rightArtifact = Phase4ArtifactFactory.CreatePerspectivalSupportPeer(tempDir, "phase4-perspectival-right");
+
+        var comparison = new EngramSupportComparisonService().Compare(
+            leftArtifact.Layout.ManifestPath,
+            rightArtifact.Layout.ManifestPath);
+
+        comparison.Classification.Should().Be("StrengthenedSupport");
+        comparison.SupportTypeCompatibility.Should().Be("Aligned");
+        comparison.SupportIdentityCompatibility.Should().Be("RootTraceable");
+        comparison.CounterfeitPressureStatus.Should().Be("none");
+        comparison.WorkingIntentRankDelta.Should().Be(1);
+        comparison.WorkingIntentTransitionStatus.Should().Be("Strengthening");
+    }
+
+    [Fact]
+    public void Phase4_Comparison_Classifies_Participatory_Peer_As_Coherent_Support()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var leftArtifact = Phase4ArtifactFactory.CreateParticipatorySupport(tempDir, "phase4-participatory-left");
+        var rightArtifact = Phase4ArtifactFactory.CreateParticipatorySupportPeer(tempDir, "phase4-participatory-right");
+
+        var comparison = new EngramSupportComparisonService().Compare(
+            leftArtifact.Layout.ManifestPath,
+            rightArtifact.Layout.ManifestPath);
+
+        comparison.Classification.Should().Be("CoherentSupport");
+        comparison.SupportTypeCompatibility.Should().Be("Aligned");
+        comparison.SupportIdentityCompatibility.Should().Be("BranchTraceable");
+        comparison.CounterfeitPressureStatus.Should().Be("none");
+        comparison.SharedSupportSignalCount.Should().BeGreaterThan(0);
+        comparison.WorkingIntentTransitionStatus.Should().Be("Stable");
+    }
+
+    [Fact]
+    public void Phase4_Comparison_Classifies_Restricted_Deferred_And_Rejected_Support_As_Lawful_Negative_States()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var basePerspectival = Phase4ArtifactFactory.CreatePerspectivalSupport(tempDir, "phase4-perspectival-base");
+        var restrictedPerspectival = Phase4ArtifactFactory.CreateRestrictedPerspectivalSupport(tempDir, "phase4-perspectival-restricted");
+        var deferredPerspectival = Phase4ArtifactFactory.CreateDeferredPerspectivalSupport(tempDir, "phase4-perspectival-deferred");
+        var baseParticipatory = Phase4ArtifactFactory.CreateParticipatorySupport(tempDir, "phase4-participatory-base");
+        var rejectedParticipatory = Phase4ArtifactFactory.CreateRejectedParticipatorySupport(tempDir, "phase4-participatory-rejected");
+        var comparisonService = new EngramSupportComparisonService();
+
+        var restrictedComparison = comparisonService.Compare(basePerspectival.Layout.ManifestPath, restrictedPerspectival.Layout.ManifestPath);
+        var deferredComparison = comparisonService.Compare(basePerspectival.Layout.ManifestPath, deferredPerspectival.Layout.ManifestPath);
+        var rejectedComparison = comparisonService.Compare(baseParticipatory.Layout.ManifestPath, rejectedParticipatory.Layout.ManifestPath);
+
+        restrictedComparison.Classification.Should().Be("RestrictedSupport");
+        restrictedComparison.WorkingIntentTransitionStatus.Should().Be("Restricted");
+        restrictedComparison.SupportIdentityCompatibility.Should().Be("RootTraceable");
+        restrictedComparison.CounterfeitPressureStatus.Should().Be("none");
+
+        deferredComparison.Classification.Should().Be("DeferredSupport");
+        deferredComparison.WorkingIntentTransitionStatus.Should().Be("Deferred");
+        deferredComparison.SupportIdentityCompatibility.Should().Be("RootTraceable");
+        deferredComparison.CounterfeitPressureStatus.Should().Be("none");
+
+        rejectedComparison.Classification.Should().Be("RejectedSupport");
+        rejectedComparison.WorkingIntentTransitionStatus.Should().Be("Rejected");
+        rejectedComparison.SupportIdentityCompatibility.Should().Be("BranchTraceable");
+        rejectedComparison.CounterfeitPressureStatus.Should().Be("none");
+    }
+
+    [Fact]
+    public void Phase4_Comparison_Classifies_Invalid_Peer_As_Counterfeit_Or_Unsupported()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var lawfulArtifact = Phase4ArtifactFactory.CreatePerspectivalSupport(tempDir, "phase4-lawful-compare");
+        var invalidArtifact = Phase4ArtifactFactory.CreateInvalidPerspectivalSupport(tempDir, "phase4-invalid-compare");
+
+        var comparison = new EngramSupportComparisonService().Compare(
+            lawfulArtifact.Layout.ManifestPath,
+            invalidArtifact.Layout.ManifestPath);
+
+        comparison.Classification.Should().Be("CounterfeitOrUnsupported");
+        comparison.CounterfeitPressureStatus.Should().Be("detected");
+        comparison.ClassificationReason.Should().Contain("fails Phase 4 support validation");
+    }
+
+    [Fact]
+    public void Phase4_Comparison_Fails_When_Support_Types_Differ()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var perspectivalArtifact = Phase4ArtifactFactory.CreatePerspectivalSupport(tempDir, "phase4-compare-perspectival");
+        var participatoryArtifact = Phase4ArtifactFactory.CreateParticipatorySupport(tempDir, "phase4-compare-participatory");
+
+        var comparison = new EngramSupportComparisonService().Compare(
+            perspectivalArtifact.Layout.ManifestPath,
+            participatoryArtifact.Layout.ManifestPath);
+
+        comparison.Classification.Should().Be("IncompatibleSupportType");
+        comparison.SupportTypeCompatibility.Should().Be("Incompatible");
+        comparison.ClassificationReason.Should().Contain("same Phase 4 support type");
+    }
+
+    [Fact]
+    public void Prime_Safe_View_Exposes_Engram_Support_Summary_Without_Protected_Payloads()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var artifact = Phase4ArtifactFactory.CreatePerspectivalSupport(tempDir, "phase4-prime-view");
+        var validation = new HopngArtifactValidator().Validate(artifact.Layout.ManifestPath);
+        var view = new HopngArtifactInspector().BuildPrimeSafeView(artifact, validation);
+        var json = JsonSerializer.Serialize(view);
+
+        json.Should().Contain("engramSupportSummary");
+        json.Should().Contain("engramStabilityField");
+        json.Should().Contain("ConstraintEnergy");
+        json.Should().Contain("perspectival");
+        json.Should().Contain("supported_intent");
+        json.Should().NotContain("protectedEvidenceRefs");
+    }
+
+    [Fact]
+    public void Committed_Examples_Do_Not_Include_Private_Keys()
+    {
+        var examplePrivateKeys = Directory.GetFiles(
+            Path.Combine(TestPaths.RepositoryRoot, "examples"),
+            "*.ed25519.private.key",
+            SearchOption.AllDirectories);
+
+        examplePrivateKeys.Should().BeEmpty("committed examples must remain public-safe");
+    }
+
+    [Fact]
+    public void Committed_Phase4_Reference_Artifacts_Preserve_Support_Boundaries()
+    {
+        var repoRoot = TestPaths.RepositoryRoot;
+        var validator = new HopngArtifactValidator();
+
+        var lawfulPerspectivalValidation = validator.Validate(Path.Combine(repoRoot, "examples", "phase4-perspectival-sample.hopng.json"));
+        var lawfulPerspectivalPeerValidation = validator.Validate(Path.Combine(repoRoot, "examples", "phase4-perspectival-peer.hopng.json"));
+        var lawfulRestrictedPerspectivalValidation = validator.Validate(Path.Combine(repoRoot, "examples", "phase4-restricted-perspectival.hopng.json"));
+        var lawfulDeferredPerspectivalValidation = validator.Validate(Path.Combine(repoRoot, "examples", "phase4-deferred-perspectival.hopng.json"));
+        var lawfulParticipatoryValidation = validator.Validate(Path.Combine(repoRoot, "examples", "phase4-participatory-sample.hopng.json"));
+        var lawfulParticipatoryPeerValidation = validator.Validate(Path.Combine(repoRoot, "examples", "phase4-participatory-peer.hopng.json"));
+        var lawfulRejectedParticipatoryValidation = validator.Validate(Path.Combine(repoRoot, "examples", "phase4-rejected-participatory.hopng.json"));
+        var invalidPerspectivalValidation = validator.Validate(Path.Combine(repoRoot, "examples", "phase4-invalid-perspectival.hopng.json"));
+        var invalidParticipatoryValidation = validator.Validate(Path.Combine(repoRoot, "examples", "phase4-invalid-participatory.hopng.json"));
+
+        lawfulPerspectivalValidation.IsValid.Should().BeTrue();
+        lawfulPerspectivalPeerValidation.IsValid.Should().BeTrue();
+        lawfulRestrictedPerspectivalValidation.IsValid.Should().BeTrue();
+        lawfulDeferredPerspectivalValidation.IsValid.Should().BeTrue();
+        lawfulParticipatoryValidation.IsValid.Should().BeTrue();
+        lawfulParticipatoryPeerValidation.IsValid.Should().BeTrue();
+        lawfulRejectedParticipatoryValidation.IsValid.Should().BeTrue();
+        invalidPerspectivalValidation.IsValid.Should().BeFalse();
+        invalidParticipatoryValidation.IsValid.Should().BeFalse();
+        invalidPerspectivalValidation.Errors.Should().Contain(issue => issue.Code == ValidationErrorCode.InvalidPerspectivalEngram);
+        invalidParticipatoryValidation.Errors.Should().Contain(issue => issue.Code == ValidationErrorCode.InvalidParticipatoryEngram);
+
+        var inspector = new HopngArtifactInspector();
+        var lawfulPrimeView = JsonSerializer.Serialize(inspector.BuildPrimeSafeView(
+            new HopngArtifactLoader().Load(Path.Combine(repoRoot, "examples", "phase4-perspectival-sample.hopng.json")),
+            lawfulPerspectivalValidation));
+        var participatoryPrimeView = JsonSerializer.Serialize(inspector.BuildPrimeSafeView(
+            new HopngArtifactLoader().Load(Path.Combine(repoRoot, "examples", "phase4-participatory-sample.hopng.json")),
+            lawfulParticipatoryValidation));
+
+        lawfulPrimeView.Should().Contain("engramSupportSummary");
+        lawfulPrimeView.Should().Contain("engramStabilityField");
+        lawfulPrimeView.Should().Contain("supported_intent");
+        participatoryPrimeView.Should().Contain("engramSupportSummary");
+        participatoryPrimeView.Should().Contain("engramStabilityField");
+        participatoryPrimeView.Should().Contain("reviewable_support");
+
+        var comparisonService = new EngramSupportComparisonService();
+        var committedPerspectivalComparison = comparisonService.Compare(
+            Path.Combine(repoRoot, "examples", "phase4-perspectival-sample.hopng.json"),
+            Path.Combine(repoRoot, "examples", "phase4-perspectival-peer.hopng.json"));
+        var committedParticipatoryComparison = comparisonService.Compare(
+            Path.Combine(repoRoot, "examples", "phase4-participatory-sample.hopng.json"),
+            Path.Combine(repoRoot, "examples", "phase4-participatory-peer.hopng.json"));
+        var committedRestrictedComparison = comparisonService.Compare(
+            Path.Combine(repoRoot, "examples", "phase4-perspectival-sample.hopng.json"),
+            Path.Combine(repoRoot, "examples", "phase4-restricted-perspectival.hopng.json"));
+        var committedDeferredComparison = comparisonService.Compare(
+            Path.Combine(repoRoot, "examples", "phase4-perspectival-sample.hopng.json"),
+            Path.Combine(repoRoot, "examples", "phase4-deferred-perspectival.hopng.json"));
+        var committedRejectedComparison = comparisonService.Compare(
+            Path.Combine(repoRoot, "examples", "phase4-participatory-sample.hopng.json"),
+            Path.Combine(repoRoot, "examples", "phase4-rejected-participatory.hopng.json"));
+
+        committedPerspectivalComparison.Classification.Should().Be("StrengthenedSupport");
+        committedParticipatoryComparison.Classification.Should().Be("CoherentSupport");
+        committedRestrictedComparison.Classification.Should().Be("RestrictedSupport");
+        committedDeferredComparison.Classification.Should().Be("DeferredSupport");
+        committedRejectedComparison.Classification.Should().Be("RejectedSupport");
+    }
 }

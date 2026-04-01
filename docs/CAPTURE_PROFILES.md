@@ -206,6 +206,12 @@ Support a cognitive claim about an engram root and constructor form before it be
 
 An Engram Root / Constructor `.hopng` is evidentiary support for candidacy, not candidacy itself.
 
+This profile now serves as Phase 4 entry support evidence, not as a substitute for later admission, commitment, or runtime identity authority.
+
+Its lawful maturity should therefore move through the Phase 4 working-intent stance ladder rather than directly into Phase 5 review or acceptance semantics.
+
+The current executable Phase 4 support sidecars also require machine-checked `intentClassification` and `supportShape` markers so this profile can stay aligned with actual validator behavior rather than drifting into doc-only language.
+
 ### Validation Target
 
 The artifact should support validation of:
@@ -234,6 +240,7 @@ The artifact should support validation of:
 - the visible claim layer must not be treated as sufficient proof by itself
 - provenance must remain inspectable even when protected evidence is pointerized
 - a candidate-support `.hopng` must not be interpreted as a binding GEL or cGEL act without an additional governing process
+- lawful negative support states such as restriction, deferral, or rejection remain evidentiary postures, not deletion of continuity history
 
 ## Sampling and Dispute-Risk Policy
 

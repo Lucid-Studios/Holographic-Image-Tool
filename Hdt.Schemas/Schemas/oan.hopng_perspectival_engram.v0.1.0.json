@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.lucid.example/oan.hopng_perspectival_engram.v0.1.0.json",
+  "title": "HOPNG Perspectival Engram Support",
+  "type": "object",
+  "required": [
+    "schema",
+    "schemaVersion",
+    "artifactId",
+    "workingIntentState",
+    "intentClassification",
+    "supportOnly",
+    "evidenceClass",
+    "claimSurface",
+    "supportShape",
+    "provenanceBasis",
+    "constructorSupportStatus",
+    "inspectionPosture",
+    "phase5HandoffReady",
+    "rootFormId",
+    "rootCoherenceStatus",
+    "rootCoherenceSignals",
+    "validationQuestions",
+    "protectedEvidenceRefs"
+  ],
+  "properties": {
+    "schema": {
+      "const": "oan.hopng_perspectival_engram"
+    },
+    "schemaVersion": {
+      "const": "0.1.0"
+    },
+    "artifactId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "workingIntentState": {
+      "type": "string"
+    },
+    "intentClassification": {
+      "type": "string",
+      "minLength": 1
+    },
+    "supportOnly": {
+      "type": "boolean"
+    },
+    "evidenceClass": {
+      "type": "string"
+    },
+    "claimSurface": {
+      "type": "string"
+    },
+    "supportShape": {
+      "type": "string",
+      "minLength": 1
+    },
+    "provenanceBasis": {
+      "type": "string",
+      "minLength": 1
+    },
+    "constructorSupportStatus": {
+      "type": "string",
+      "minLength": 1
+    },
+    "inspectionPosture": {
+      "type": "string",
+      "minLength": 1
+    },
+    "phase5HandoffReady": {
+      "type": "boolean"
+    },
+    "rootFormId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rootCoherenceStatus": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rootCoherenceSignals": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "validationQuestions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "protectedEvidenceRefs": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "restrictionReason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "deferReason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "rejectionReason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

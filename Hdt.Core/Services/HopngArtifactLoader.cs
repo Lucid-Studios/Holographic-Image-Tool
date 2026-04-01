@@ -29,7 +29,9 @@ public sealed class HopngArtifactLoader
             EventSliceSet = TryReadOptional<EventSliceSet>(manifest, layout, "event-slices"),
             PhaseSliceSet = TryReadOptional<PhaseSliceSet>(manifest, layout, "phase-slices"),
             PhasePolicy = TryReadOptional<PhasePolicy>(manifest, layout, "phase-policy"),
-            OpticalChannelsDefinition = TryReadOptional<OpticalChannelsDefinition>(manifest, layout, "optical-channels")
+            OpticalChannelsDefinition = TryReadOptional<OpticalChannelsDefinition>(manifest, layout, "optical-channels"),
+            PerspectivalEngramSupport = TryReadOptional<PerspectivalEngramSupport>(manifest, layout, "perspectival-engram"),
+            ParticipatoryEngramSupport = TryReadOptional<ParticipatoryEngramSupport>(manifest, layout, "participatory-engram")
         };
     }
 

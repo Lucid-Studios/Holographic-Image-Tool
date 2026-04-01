@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "formalSurfaceMarkdownPath": "docs/HDT_AUTOMATION_LANE.md",
+  "statusJsonPath": ".audit/state/master-thread-orchestration-status.json",
+  "statusMarkdownPath": ".audit/state/master-thread-orchestration-status.md",
+  "requiredPublishedBranch": "main",
+  "requiredWorktreeState": "clean",
+  "allowedContinuationStatuses": [
+    "candidate-ready",
+    "hitl-required"
+  ],
+  "blockedStatus": "blocked",
+  "handoffEligibilityRule": "Branch alignment and clean-worktree signals are advisory in the first HDT lane. They are recorded for later handoff eligibility and do not block the local cycle by themselves.",
+  "codexAutomationSupport": {
+    "nativeRunOnceSupported": false,
+    "supportState": "manual-first-scheduler-ready",
+    "reason": "The first HDT automation lane is a local manual conveyor with scheduler-ready cadence fields and live state surfaces, not unattended native run-once orchestration."
+  }
+}

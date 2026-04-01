@@ -7,14 +7,22 @@ namespace Hdt.Core.Services;
 public sealed class HopngArtifactInspector
 {
     private readonly ArtifactDiagnosticService _diagnosticService = new();
+    private readonly EngramStabilityFieldService _engramStabilityFieldService = new();
     private readonly GovernedProjectionDerivationService _projectionDerivationService = new();
     private readonly TemporalPhaseStackService _temporalPhaseStackService = new();
+    private readonly Phase4EngramScaffoldingService _phase4EngramScaffoldingService = new();
 
     public object BuildPrimeSafeView(LoadedHopngArtifact artifact, ValidationResult validationResult)
     {
         var approved = artifact.Manifest.VisibilityPolicy.ApprovedMetadataFields;
         var temporalSummary = TemporalPhaseStackService.HasPhase3Sidecars(artifact)
             ? _temporalPhaseStackService.Render(artifact, validationResult, "prime")
+            : null;
+        var engramSupportSummary = Phase4EngramScaffoldingService.HasPhase4Sidecars(artifact)
+            ? _phase4EngramScaffoldingService.BuildPrimeSafeSummary(artifact)
+            : null;
+        var engramStabilityField = Phase4EngramScaffoldingService.HasPhase4Sidecars(artifact)
+            ? _engramStabilityFieldService.Build(artifact, validationResult, temporalSummary)
             : null;
         var summary = new Dictionary<string, object?>(StringComparer.Ordinal)
         {
@@ -39,36 +47,51 @@ public sealed class HopngArtifactInspector
                 reference.Policy,
                 reference.Summary
             }),
+            engramSupportSummary,
+            engramStabilityField,
             temporalSummary,
             diagnostics = _diagnosticService.Analyze(artifact, validationResult),
             isValid = validationResult.IsValid
         };
     }
 
-    public object BuildPrivilegedView(LoadedHopngArtifact artifact, ValidationResult validationResult) => new
+    public object BuildPrivilegedView(LoadedHopngArtifact artifact, ValidationResult validationResult)
     {
-        view = "privileged",
-        manifest = artifact.Manifest,
-        layerMap = artifact.LayerMap,
-        universeLayerSet = artifact.UniverseLayerSet,
-        gluingManifest = artifact.GluingManifest,
-        projectionRules = artifact.ProjectionRules,
-        legibilityProfile = artifact.LegibilityProfile,
-        eventSliceSet = artifact.EventSliceSet,
-        phaseSliceSet = artifact.PhaseSliceSet,
-        phasePolicy = artifact.PhasePolicy,
-        opticalChannels = artifact.OpticalChannelsDefinition,
-        trustEnvelope = artifact.TrustEnvelope,
-        transformHistory = artifact.TransformHistory,
-        depthField = artifact.DepthField,
-        hashSidecar = artifact.HashSidecar,
-        signatureSidecar = artifact.SignatureSidecar,
-        governedProjection = _projectionDerivationService.Derive(artifact, validationResult),
-        temporalPhaseStack = TemporalPhaseStackService.HasPhase3Sidecars(artifact)
+        var temporalPhaseStack = TemporalPhaseStackService.HasPhase3Sidecars(artifact)
             ? _temporalPhaseStackService.Render(artifact, validationResult, "privileged")
-            : null,
-        diagnostics = _diagnosticService.Analyze(artifact, validationResult),
-        isValid = validationResult.IsValid,
-        errors = validationResult.Errors
-    };
+            : null;
+
+        return new
+        {
+            view = "privileged",
+            manifest = artifact.Manifest,
+            layerMap = artifact.LayerMap,
+            universeLayerSet = artifact.UniverseLayerSet,
+            gluingManifest = artifact.GluingManifest,
+            projectionRules = artifact.ProjectionRules,
+            legibilityProfile = artifact.LegibilityProfile,
+            eventSliceSet = artifact.EventSliceSet,
+            phaseSliceSet = artifact.PhaseSliceSet,
+            phasePolicy = artifact.PhasePolicy,
+            opticalChannels = artifact.OpticalChannelsDefinition,
+            perspectivalEngram = artifact.PerspectivalEngramSupport,
+            participatoryEngram = artifact.ParticipatoryEngramSupport,
+            engramSupportSummary = Phase4EngramScaffoldingService.HasPhase4Sidecars(artifact)
+                ? _phase4EngramScaffoldingService.BuildPrimeSafeSummary(artifact)
+                : null,
+            engramStabilityField = Phase4EngramScaffoldingService.HasPhase4Sidecars(artifact)
+                ? _engramStabilityFieldService.Build(artifact, validationResult, temporalPhaseStack)
+                : null,
+            trustEnvelope = artifact.TrustEnvelope,
+            transformHistory = artifact.TransformHistory,
+            depthField = artifact.DepthField,
+            hashSidecar = artifact.HashSidecar,
+            signatureSidecar = artifact.SignatureSidecar,
+            governedProjection = _projectionDerivationService.Derive(artifact, validationResult),
+            temporalPhaseStack,
+            diagnostics = _diagnosticService.Analyze(artifact, validationResult),
+            isValid = validationResult.IsValid,
+            errors = validationResult.Errors
+        };
+    }
 }

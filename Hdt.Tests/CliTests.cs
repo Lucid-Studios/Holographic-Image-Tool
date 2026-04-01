@@ -195,6 +195,29 @@ public sealed class CliTests
     }
 
     [Fact]
+    public void Cli_New_Phase3_Sample_Allows_External_Private_Key_Output()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var keyDir = TestPaths.CreateTempDirectory();
+        var privateKeyPath = Path.Combine(keyDir, "phase3-reference.ed25519.private.key");
+        var output = new StringWriter();
+        var runner = new CliRunner(output);
+
+        var createExitCode = runner.Execute(
+        [
+            "new-phase3-sample",
+            "--output-dir", tempDir,
+            "--name", "cli-phase3-external-key",
+            "--private-key-out", privateKeyPath,
+            "--json"
+        ]);
+
+        createExitCode.Should().Be(0, output.ToString());
+        File.Exists(privateKeyPath).Should().BeTrue();
+        File.Exists(Path.Combine(tempDir, "cli-phase3-external-key.ed25519.private.key")).Should().BeFalse();
+    }
+
+    [Fact]
     public void Cli_New_Phase3_Invalid_Sample_Fails_Temporal_Validation()
     {
         var tempDir = TestPaths.CreateTempDirectory();
@@ -432,7 +455,333 @@ public sealed class CliTests
 
         exitCode.Should().Be(0, helpText);
         helpText.Should().Contain("21 reserved later-phase command invoked");
-        helpText.Should().Contain("24 temporal derivation incomplete or basis-incompatible temporal comparison");
-        helpText.Should().Contain("25 flattened, unsupported, or invalid derivation or comparison surface");
+        helpText.Should().Contain("24 temporal derivation incomplete, basis-incompatible comparison, or support-type-incompatible engram comparison");
+        helpText.Should().Contain("25 flattened, unsupported, counterfeit, or invalid derivation or comparison surface");
+    }
+
+    [Fact]
+    public void Cli_New_Phase4_Perspectival_Sample_Creates_A_Valid_Entry_Artifact()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var output = new StringWriter();
+        var runner = new CliRunner(output);
+
+        var createExitCode = runner.Execute(["new-phase4-perspectival-sample", "--output-dir", tempDir, "--name", "cli-phase4-perspectival", "--json"]);
+        output.GetStringBuilder().Clear();
+        var validateExitCode = runner.Execute(["validate", "--path", Path.Combine(tempDir, "cli-phase4-perspectival.hopng.json"), "--json"]);
+        var validateJson = output.ToString();
+
+        output.GetStringBuilder().Clear();
+        var showExitCode = runner.Execute(["show", "--path", Path.Combine(tempDir, "cli-phase4-perspectival.hopng.json"), "--view", "prime", "--json"]);
+        var showJson = output.ToString();
+
+        createExitCode.Should().Be(0);
+        validateExitCode.Should().Be(0, validateJson);
+        showExitCode.Should().Be(0, showJson);
+        showJson.Should().Contain("\"engramSupportSummary\"");
+        showJson.Should().Contain("\"engramStabilityField\"");
+        showJson.Should().Contain("\"supportType\": \"perspectival\"");
+        showJson.Should().Contain("\"workingIntentState\": \"supported_intent\"");
+    }
+
+    [Fact]
+    public void Cli_New_Phase4_Perspectival_Sample_Allows_External_Private_Key_Output()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var keyDir = TestPaths.CreateTempDirectory();
+        var privateKeyPath = Path.Combine(keyDir, "phase4-reference.ed25519.private.key");
+        var output = new StringWriter();
+        var runner = new CliRunner(output);
+
+        var createExitCode = runner.Execute(
+        [
+            "new-phase4-perspectival-sample",
+            "--output-dir", tempDir,
+            "--name", "cli-phase4-external-key",
+            "--private-key-out", privateKeyPath,
+            "--json"
+        ]);
+
+        createExitCode.Should().Be(0, output.ToString());
+        File.Exists(privateKeyPath).Should().BeTrue();
+        File.Exists(Path.Combine(tempDir, "cli-phase4-external-key.ed25519.private.key")).Should().BeFalse();
+    }
+
+    [Fact]
+    public void Cli_New_Phase4_Perspectival_Peer_Sample_Creates_A_Valid_Entry_Artifact()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var output = new StringWriter();
+        var runner = new CliRunner(output);
+
+        var createExitCode = runner.Execute(["new-phase4-perspectival-peer-sample", "--output-dir", tempDir, "--name", "cli-phase4-perspectival-peer", "--json"]);
+        output.GetStringBuilder().Clear();
+        var compareExitCode = runner.Execute(
+        [
+            "compare-engram-support",
+            "--left", Path.Combine(tempDir, "cli-phase4-perspectival-peer.hopng.json"),
+            "--right", Path.Combine(tempDir, "cli-phase4-perspectival-peer.hopng.json"),
+            "--json"
+        ]);
+        var compareJson = output.ToString();
+        using var compareDocument = JsonDocument.Parse(compareJson);
+
+        createExitCode.Should().Be(0);
+        compareExitCode.Should().Be(0, compareJson);
+        compareDocument.RootElement.GetProperty("classification").GetString().Should().Be("CoherentSupport");
+        compareDocument.RootElement.GetProperty("supportTypeCompatibility").GetString().Should().Be("Aligned");
+    }
+
+    [Fact]
+    public void Cli_New_Phase4_Invalid_Perspectival_Sample_Fails_Validation()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var output = new StringWriter();
+        var runner = new CliRunner(output);
+
+        var createExitCode = runner.Execute(["new-phase4-invalid-perspectival-sample", "--output-dir", tempDir, "--name", "cli-phase4-perspectival-invalid", "--json"]);
+        output.GetStringBuilder().Clear();
+        var validateExitCode = runner.Execute(["validate", "--path", Path.Combine(tempDir, "cli-phase4-perspectival-invalid.hopng.json"), "--json"]);
+        var validateJson = output.ToString();
+        using var validateDocument = JsonDocument.Parse(validateJson);
+
+        createExitCode.Should().Be(0);
+        validateExitCode.Should().Be((int)Hdt.Core.Validation.ValidationErrorCode.InvalidPerspectivalEngram, validateJson);
+        validateDocument.RootElement.GetProperty("errors").EnumerateArray()
+            .Any(error => error.GetProperty("code").GetInt32() == (int)Hdt.Core.Validation.ValidationErrorCode.InvalidPerspectivalEngram)
+            .Should().BeTrue(validateJson);
+    }
+
+    [Fact]
+    public void Cli_New_Phase4_Participatory_Sample_Creates_A_Valid_Entry_Artifact()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var output = new StringWriter();
+        var runner = new CliRunner(output);
+
+        var createExitCode = runner.Execute(["new-phase4-participatory-sample", "--output-dir", tempDir, "--name", "cli-phase4-participatory", "--json"]);
+        output.GetStringBuilder().Clear();
+        var validateExitCode = runner.Execute(["validate", "--path", Path.Combine(tempDir, "cli-phase4-participatory.hopng.json"), "--json"]);
+        var validateJson = output.ToString();
+
+        output.GetStringBuilder().Clear();
+        var showExitCode = runner.Execute(["show", "--path", Path.Combine(tempDir, "cli-phase4-participatory.hopng.json"), "--view", "prime", "--json"]);
+        var showJson = output.ToString();
+
+        createExitCode.Should().Be(0);
+        validateExitCode.Should().Be(0, validateJson);
+        showExitCode.Should().Be(0, showJson);
+        showJson.Should().Contain("\"engramStabilityField\"");
+        showJson.Should().Contain("\"supportType\": \"participatory\"");
+        showJson.Should().Contain("\"workingIntentState\": \"reviewable_support\"");
+    }
+
+    [Fact]
+    public void Cli_Compare_Engram_Support_Classifies_Perspectival_Peer_As_Strengthened()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var leftArtifact = Phase4ArtifactFactory.CreatePerspectivalSupport(tempDir, "cli-phase4-perspectival-left");
+        var rightArtifact = Phase4ArtifactFactory.CreatePerspectivalSupportPeer(tempDir, "cli-phase4-perspectival-right");
+        var output = new StringWriter();
+        var runner = new CliRunner(output);
+
+        var exitCode = runner.Execute(
+        [
+            "compare-engram-support",
+            "--left", leftArtifact.Layout.ManifestPath,
+            "--right", rightArtifact.Layout.ManifestPath,
+            "--json"
+        ]);
+        var comparisonJson = output.ToString();
+        using var comparisonDocument = JsonDocument.Parse(comparisonJson);
+
+        exitCode.Should().Be(0, comparisonJson);
+        comparisonDocument.RootElement.GetProperty("classification").GetString().Should().Be("StrengthenedSupport");
+        comparisonDocument.RootElement.GetProperty("supportIdentityCompatibility").GetString().Should().Be("RootTraceable");
+        comparisonDocument.RootElement.GetProperty("counterfeitPressureStatus").GetString().Should().Be("none");
+        comparisonDocument.RootElement.GetProperty("workingIntentTransitionStatus").GetString().Should().Be("Strengthening");
+        comparisonDocument.RootElement.GetProperty("workingIntentRankDelta").GetInt32().Should().Be(1);
+    }
+
+    [Fact]
+    public void Cli_Compare_Engram_Support_Human_Readable_Output_Includes_Counterfeit_And_Coherence_Context()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var leftArtifact = Phase4ArtifactFactory.CreateParticipatorySupport(tempDir, "cli-phase4-participatory-left");
+        var rightArtifact = Phase4ArtifactFactory.CreateParticipatorySupportPeer(tempDir, "cli-phase4-participatory-right");
+        var output = new StringWriter();
+        var runner = new CliRunner(output);
+
+        var exitCode = runner.Execute(
+        [
+            "compare-engram-support",
+            "--left", leftArtifact.Layout.ManifestPath,
+            "--right", rightArtifact.Layout.ManifestPath
+        ]);
+        var comparisonText = output.ToString();
+
+        exitCode.Should().Be(0, comparisonText);
+        comparisonText.Should().Contain("Engram support comparison classification: CoherentSupport");
+        comparisonText.Should().Contain("Support shapes: ");
+        comparisonText.Should().Contain("Support identity compatibility: ");
+        comparisonText.Should().Contain("Counterfeit pressure: ");
+        comparisonText.Should().Contain("Intent classifications: ");
+        comparisonText.Should().Contain("Working-intent transition: Stable");
+        comparisonText.Should().Contain("Working-intent rank delta: ");
+        comparisonText.Should().Contain("Similarity score: ");
+        comparisonText.Should().Contain("Signals: ");
+    }
+
+    [Fact]
+    public void Cli_Compare_Engram_Support_Returns_Nonzero_When_Support_Types_Differ()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var leftArtifact = Phase4ArtifactFactory.CreatePerspectivalSupport(tempDir, "cli-phase4-incompat-left");
+        var rightArtifact = Phase4ArtifactFactory.CreateParticipatorySupport(tempDir, "cli-phase4-incompat-right");
+        var output = new StringWriter();
+        var runner = new CliRunner(output);
+
+        var exitCode = runner.Execute(
+        [
+            "compare-engram-support",
+            "--left", leftArtifact.Layout.ManifestPath,
+            "--right", rightArtifact.Layout.ManifestPath,
+            "--json"
+        ]);
+        var comparisonJson = output.ToString();
+        using var comparisonDocument = JsonDocument.Parse(comparisonJson);
+
+        exitCode.Should().Be(24, comparisonJson);
+        comparisonDocument.RootElement.GetProperty("classification").GetString().Should().Be("IncompatibleSupportType");
+    }
+
+    [Fact]
+    public void Cli_Compare_Engram_Support_Returns_Counterfeit_When_Right_Artifact_Is_Invalid()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var lawfulArtifact = Phase4ArtifactFactory.CreatePerspectivalSupport(tempDir, "cli-phase4-lawful");
+        var invalidArtifact = Phase4ArtifactFactory.CreateInvalidPerspectivalSupport(tempDir, "cli-phase4-invalid");
+        var output = new StringWriter();
+        var runner = new CliRunner(output);
+
+        var exitCode = runner.Execute(
+        [
+            "compare-engram-support",
+            "--left", lawfulArtifact.Layout.ManifestPath,
+            "--right", invalidArtifact.Layout.ManifestPath,
+            "--json"
+        ]);
+        var comparisonJson = output.ToString();
+        using var comparisonDocument = JsonDocument.Parse(comparisonJson);
+
+        exitCode.Should().Be(25, comparisonJson);
+        comparisonDocument.RootElement.GetProperty("classification").GetString().Should().Be("CounterfeitOrUnsupported");
+        comparisonDocument.RootElement.GetProperty("counterfeitPressureStatus").GetString().Should().Be("detected");
+    }
+
+    [Fact]
+    public void Cli_New_Phase4_Restricted_Deferred_And_Rejected_Samples_Create_Valid_Entry_Artifacts()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var output = new StringWriter();
+        var runner = new CliRunner(output);
+
+        var restrictedExitCode = runner.Execute(["new-phase4-restricted-perspectival-sample", "--output-dir", tempDir, "--name", "cli-phase4-restricted", "--json"]);
+        output.GetStringBuilder().Clear();
+        var deferredExitCode = runner.Execute(["new-phase4-deferred-perspectival-sample", "--output-dir", tempDir, "--name", "cli-phase4-deferred", "--json"]);
+        output.GetStringBuilder().Clear();
+        var rejectedExitCode = runner.Execute(["new-phase4-rejected-participatory-sample", "--output-dir", tempDir, "--name", "cli-phase4-rejected", "--json"]);
+        output.GetStringBuilder().Clear();
+
+        var restrictedValidateExitCode = runner.Execute(["validate", "--path", Path.Combine(tempDir, "cli-phase4-restricted.hopng.json"), "--json"]);
+        var restrictedValidateJson = output.ToString();
+        output.GetStringBuilder().Clear();
+        var deferredValidateExitCode = runner.Execute(["validate", "--path", Path.Combine(tempDir, "cli-phase4-deferred.hopng.json"), "--json"]);
+        var deferredValidateJson = output.ToString();
+        output.GetStringBuilder().Clear();
+        var rejectedValidateExitCode = runner.Execute(["validate", "--path", Path.Combine(tempDir, "cli-phase4-rejected.hopng.json"), "--json"]);
+        var rejectedValidateJson = output.ToString();
+
+        restrictedExitCode.Should().Be(0);
+        deferredExitCode.Should().Be(0);
+        rejectedExitCode.Should().Be(0);
+        restrictedValidateExitCode.Should().Be(0, restrictedValidateJson);
+        deferredValidateExitCode.Should().Be(0, deferredValidateJson);
+        rejectedValidateExitCode.Should().Be(0, rejectedValidateJson);
+    }
+
+    [Fact]
+    public void Cli_Compare_Engram_Support_Classifies_Restricted_Deferred_And_Rejected_States()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var basePerspectival = Phase4ArtifactFactory.CreatePerspectivalSupport(tempDir, "cli-phase4-base-perspectival");
+        var restrictedPerspectival = Phase4ArtifactFactory.CreateRestrictedPerspectivalSupport(tempDir, "cli-phase4-restricted-perspectival");
+        var deferredPerspectival = Phase4ArtifactFactory.CreateDeferredPerspectivalSupport(tempDir, "cli-phase4-deferred-perspectival");
+        var baseParticipatory = Phase4ArtifactFactory.CreateParticipatorySupport(tempDir, "cli-phase4-base-participatory");
+        var rejectedParticipatory = Phase4ArtifactFactory.CreateRejectedParticipatorySupport(tempDir, "cli-phase4-rejected-participatory");
+        var output = new StringWriter();
+        var runner = new CliRunner(output);
+
+        var restrictedExitCode = runner.Execute(
+        [
+            "compare-engram-support",
+            "--left", basePerspectival.Layout.ManifestPath,
+            "--right", restrictedPerspectival.Layout.ManifestPath,
+            "--json"
+        ]);
+        var restrictedJson = output.ToString();
+        using var restrictedDocument = JsonDocument.Parse(restrictedJson);
+        output.GetStringBuilder().Clear();
+
+        var deferredExitCode = runner.Execute(
+        [
+            "compare-engram-support",
+            "--left", basePerspectival.Layout.ManifestPath,
+            "--right", deferredPerspectival.Layout.ManifestPath,
+            "--json"
+        ]);
+        var deferredJson = output.ToString();
+        using var deferredDocument = JsonDocument.Parse(deferredJson);
+        output.GetStringBuilder().Clear();
+
+        var rejectedExitCode = runner.Execute(
+        [
+            "compare-engram-support",
+            "--left", baseParticipatory.Layout.ManifestPath,
+            "--right", rejectedParticipatory.Layout.ManifestPath,
+            "--json"
+        ]);
+        var rejectedJson = output.ToString();
+        using var rejectedDocument = JsonDocument.Parse(rejectedJson);
+
+        restrictedExitCode.Should().Be(0, restrictedJson);
+        deferredExitCode.Should().Be(0, deferredJson);
+        rejectedExitCode.Should().Be(0, rejectedJson);
+        restrictedDocument.RootElement.GetProperty("classification").GetString().Should().Be("RestrictedSupport");
+        restrictedDocument.RootElement.GetProperty("workingIntentTransitionStatus").GetString().Should().Be("Restricted");
+        deferredDocument.RootElement.GetProperty("classification").GetString().Should().Be("DeferredSupport");
+        deferredDocument.RootElement.GetProperty("workingIntentTransitionStatus").GetString().Should().Be("Deferred");
+        rejectedDocument.RootElement.GetProperty("classification").GetString().Should().Be("RejectedSupport");
+        rejectedDocument.RootElement.GetProperty("workingIntentTransitionStatus").GetString().Should().Be("Rejected");
+    }
+
+    [Fact]
+    public void Cli_New_Phase4_Invalid_Participatory_Sample_Fails_Validation()
+    {
+        var tempDir = TestPaths.CreateTempDirectory();
+        var output = new StringWriter();
+        var runner = new CliRunner(output);
+
+        var createExitCode = runner.Execute(["new-phase4-invalid-participatory-sample", "--output-dir", tempDir, "--name", "cli-phase4-participatory-invalid", "--json"]);
+        output.GetStringBuilder().Clear();
+        var validateExitCode = runner.Execute(["validate", "--path", Path.Combine(tempDir, "cli-phase4-participatory-invalid.hopng.json"), "--json"]);
+        var validateJson = output.ToString();
+        using var validateDocument = JsonDocument.Parse(validateJson);
+
+        createExitCode.Should().Be(0);
+        validateExitCode.Should().Be((int)Hdt.Core.Validation.ValidationErrorCode.InvalidParticipatoryEngram, validateJson);
+        validateDocument.RootElement.GetProperty("errors").EnumerateArray()
+            .Any(error => error.GetProperty("code").GetInt32() == (int)Hdt.Core.Validation.ValidationErrorCode.InvalidParticipatoryEngram)
+            .Should().BeTrue(validateJson);
     }
 }

@@ -20,4 +20,6 @@ public sealed record LoadedHopngArtifact
     public PhaseSliceSet? PhaseSliceSet { get; init; }
     public PhasePolicy? PhasePolicy { get; init; }
     public OpticalChannelsDefinition? OpticalChannelsDefinition { get; init; }
+    public PerspectivalEngramSupport? PerspectivalEngramSupport { get; init; }
+    public ParticipatoryEngramSupport? ParticipatoryEngramSupport { get; init; }
 }

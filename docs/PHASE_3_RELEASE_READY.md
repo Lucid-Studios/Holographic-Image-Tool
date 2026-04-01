@@ -21,6 +21,22 @@ The approved Phase 3 release scope includes:
 - human-readable and JSON operator surfaces with deterministic exit codes
 - committed public-safe reference artifacts and wrapper-backed smoke verification
 
+## Interlaced Build Meaning
+
+Inside the wider OAN stack, this approved Phase 3 baseline should currently be read as an optional governed artifact evidence surface.
+
+That means it is mature enough to support:
+
+- local `.hopng` validation and inspection
+- temporal evidence comparison
+- optional supplementary readiness or packet evidence when admitted
+
+It does not yet mean:
+
+- mandatory runtime dependence in `OAN Tech Stack`
+- constitutive authority over executable truth
+- automatic promotion of `.hopng` into wider-stack runtime law
+
 ## Release Target
 
 Phase 3 release-ready means:
@@ -90,6 +106,8 @@ The current repo-local smoke path should remain wrapper-backed and artifact-orie
 
 The wrapper-backed smoke path should verify both JSON and human-readable operator output for the public temporal commands, so release readiness does not silently validate only the machine-readable branch.
 
+For local automation, the minimum truthful verification posture for this release surface is `Closing`. `Approved` may use the same full mechanical verification chain, but still requires explicit HITL approval before release or adoption is claimed.
+
 ## Documentation Gates
 
 Release-ready documentation must include:
@@ -124,3 +142,5 @@ Do not begin engram implementation until:
 - temporal state classes are stable
 - cross-artifact comparison semantics are stable
 - temporal docs and reference artifacts are clean enough that later identity semantics do not have to redefine them
+
+The bounded bridge that begins after this stop line is recorded in [`PHASE_4_ENTRY_CRITERIA.md`](./PHASE_4_ENTRY_CRITERIA.md).

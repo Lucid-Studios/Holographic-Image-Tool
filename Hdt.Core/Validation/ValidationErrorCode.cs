@@ -19,5 +19,8 @@ public enum ValidationErrorCode
     InvalidEventSlice = 30,
     InvalidPhaseSlice = 31,
     InvalidPhasePolicy = 32,
-    InvalidOpticalChannels = 33
+    InvalidOpticalChannels = 33,
+    InvalidEngramSupport = 34,
+    InvalidPerspectivalEngram = 35,
+    InvalidParticipatoryEngram = 36
 }

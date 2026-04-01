@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.lucid.example/oan.hopng_participatory_engram.v0.1.0.json",
+  "title": "HOPNG Participatory Engram Support",
+  "type": "object",
+  "required": [
+    "schema",
+    "schemaVersion",
+    "artifactId",
+    "workingIntentState",
+    "intentClassification",
+    "supportOnly",
+    "evidenceClass",
+    "claimSurface",
+    "supportShape",
+    "provenanceBasis",
+    "constructorSupportStatus",
+    "inspectionPosture",
+    "phase5HandoffReady",
+    "branchSetId",
+    "branchCoherenceStatus",
+    "branchCoherenceSignals",
+    "participantBranches",
+    "validationQuestions",
+    "protectedEvidenceRefs"
+  ],
+  "properties": {
+    "schema": {
+      "const": "oan.hopng_participatory_engram"
+    },
+    "schemaVersion": {
+      "const": "0.1.0"
+    },
+    "artifactId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "workingIntentState": {
+      "type": "string"
+    },
+    "intentClassification": {
+      "type": "string",
+      "minLength": 1
+    },
+    "supportOnly": {
+      "type": "boolean"
+    },
+    "evidenceClass": {
+      "type": "string"
+    },
+    "claimSurface": {
+      "type": "string"
+    },
+    "supportShape": {
+      "type": "string",
+      "minLength": 1
+    },
+    "provenanceBasis": {
+      "type": "string",
+      "minLength": 1
+    },
+    "constructorSupportStatus": {
+      "type": "string",
+      "minLength": 1
+    },
+    "inspectionPosture": {
+      "type": "string",
+      "minLength": 1
+    },
+    "phase5HandoffReady": {
+      "type": "boolean"
+    },
+    "branchSetId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "branchCoherenceStatus": {
+      "type": "string",
+      "minLength": 1
+    },
+    "branchCoherenceSignals": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "participantBranches": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "validationQuestions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "protectedEvidenceRefs": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "restrictionReason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "deferReason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "rejectionReason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

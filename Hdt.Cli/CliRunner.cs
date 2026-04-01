@@ -14,8 +14,10 @@ public sealed class CliRunner
     private readonly HopngArtifactLoader _loader = new();
     private readonly HopngArtifactInspector _inspector = new();
     private readonly Phase3SampleArtifactBuilder _phase3SampleBuilder = new();
+    private readonly Phase4SampleArtifactBuilder _phase4SampleBuilder = new();
     private readonly GovernedProjectionDerivationService _projectionDerivationService = new();
     private readonly ProjectionSupportComparisonService _projectionComparisonService = new();
+    private readonly EngramSupportComparisonService _engramSupportComparisonService = new();
     private readonly TemporalPhaseStackService _temporalPhaseStackService = new();
     private readonly TemporalPhaseStackComparisonService _temporalPhaseStackComparisonService = new();
 
@@ -45,12 +47,22 @@ public sealed class CliRunner
                 "new-phase3-divergent-peer-sample" => CreatePhase3DivergentPeerSample(options),
                 "new-phase3-incompatible-basis-sample" => CreatePhase3IncompatibleBasisSample(options),
                 "new-phase3-invalid-sample" => CreateInvalidPhase3Sample(options),
+                "new-phase4-perspectival-sample" => CreatePhase4PerspectivalSample(options),
+                "new-phase4-perspectival-peer-sample" => CreatePhase4PerspectivalPeerSample(options),
+                "new-phase4-restricted-perspectival-sample" => CreateRestrictedPhase4PerspectivalSample(options),
+                "new-phase4-deferred-perspectival-sample" => CreateDeferredPhase4PerspectivalSample(options),
+                "new-phase4-invalid-perspectival-sample" => CreateInvalidPhase4PerspectivalSample(options),
+                "new-phase4-participatory-sample" => CreatePhase4ParticipatorySample(options),
+                "new-phase4-participatory-peer-sample" => CreatePhase4ParticipatoryPeerSample(options),
+                "new-phase4-rejected-participatory-sample" => CreateRejectedPhase4ParticipatorySample(options),
+                "new-phase4-invalid-participatory-sample" => CreateInvalidPhase4ParticipatorySample(options),
                 "validate" => ValidateArtifact(options),
                 "show" => ShowArtifact(options),
                 "merge-layers" => MergeLayers(options),
                 "render-phase-stack" => RenderPhaseStack(options),
                 "compare-surfaces" => CompareSurfaces(options),
                 "compare-phase-stacks" => ComparePhaseStacks(options),
+                "compare-engram-support" => CompareEngramSupport(options),
                 "invoke-formation" => Reserved("Invoke-HOPNGFormation", 5),
                 "bind-oe" => Reserved("Bind-HOPNGToOE", 6),
                 _ => UnknownCommand(command)
@@ -220,6 +232,69 @@ public sealed class CliRunner
             phaseSlices = artifact.Layout.PhaseSlicePath
         }, options.Json);
 
+        return 0;
+    }
+
+    private int CreatePhase4PerspectivalSample(CliOptions options)
+    {
+        var artifact = _phase4SampleBuilder.CreatePerspectivalSupportSample(BuildArtifactRequest(options));
+        WritePhase4CreateResult(artifact, options.Json);
+        return 0;
+    }
+
+    private int CreateInvalidPhase4PerspectivalSample(CliOptions options)
+    {
+        var artifact = _phase4SampleBuilder.CreateInvalidPerspectivalSupportSample(BuildArtifactRequest(options));
+        WritePhase4CreateResult(artifact, options.Json);
+        return 0;
+    }
+
+    private int CreatePhase4PerspectivalPeerSample(CliOptions options)
+    {
+        var artifact = _phase4SampleBuilder.CreatePerspectivalSupportPeerSample(BuildArtifactRequest(options));
+        WritePhase4CreateResult(artifact, options.Json);
+        return 0;
+    }
+
+    private int CreateRestrictedPhase4PerspectivalSample(CliOptions options)
+    {
+        var artifact = _phase4SampleBuilder.CreateRestrictedPerspectivalSupportSample(BuildArtifactRequest(options));
+        WritePhase4CreateResult(artifact, options.Json);
+        return 0;
+    }
+
+    private int CreateDeferredPhase4PerspectivalSample(CliOptions options)
+    {
+        var artifact = _phase4SampleBuilder.CreateDeferredPerspectivalSupportSample(BuildArtifactRequest(options));
+        WritePhase4CreateResult(artifact, options.Json);
+        return 0;
+    }
+
+    private int CreatePhase4ParticipatorySample(CliOptions options)
+    {
+        var artifact = _phase4SampleBuilder.CreateParticipatorySupportSample(BuildArtifactRequest(options));
+        WritePhase4CreateResult(artifact, options.Json);
+        return 0;
+    }
+
+    private int CreatePhase4ParticipatoryPeerSample(CliOptions options)
+    {
+        var artifact = _phase4SampleBuilder.CreateParticipatorySupportPeerSample(BuildArtifactRequest(options));
+        WritePhase4CreateResult(artifact, options.Json);
+        return 0;
+    }
+
+    private int CreateRejectedPhase4ParticipatorySample(CliOptions options)
+    {
+        var artifact = _phase4SampleBuilder.CreateRejectedParticipatorySupportSample(BuildArtifactRequest(options));
+        WritePhase4CreateResult(artifact, options.Json);
+        return 0;
+    }
+
+    private int CreateInvalidPhase4ParticipatorySample(CliOptions options)
+    {
+        var artifact = _phase4SampleBuilder.CreateInvalidParticipatorySupportSample(BuildArtifactRequest(options));
+        WritePhase4CreateResult(artifact, options.Json);
         return 0;
     }
 
@@ -404,6 +479,53 @@ public sealed class CliRunner
         };
     }
 
+    private int CompareEngramSupport(CliOptions options)
+    {
+        var view = options.Get("view", "prime");
+        var result = _engramSupportComparisonService.Compare(
+            options.Require("left"),
+            options.Require("right"),
+            view);
+
+        if (options.Json)
+        {
+            Write(result, true);
+        }
+        else
+        {
+            _writer.WriteLine($"Engram support comparison classification: {result.Classification}");
+            _writer.WriteLine($"Support type compatibility: {result.SupportTypeCompatibility}");
+            _writer.WriteLine($"Support shapes: {result.LeftSupportShape} vs {result.RightSupportShape}");
+            _writer.WriteLine($"Support identity compatibility: {result.SupportIdentityCompatibility}");
+            _writer.WriteLine($"Counterfeit pressure: {result.CounterfeitPressureStatus}");
+            _writer.WriteLine($"Working-intent states: {result.LeftWorkingIntentState} vs {result.RightWorkingIntentState}");
+            _writer.WriteLine($"Intent classifications: {result.LeftIntentClassification} vs {result.RightIntentClassification}");
+            _writer.WriteLine($"Working-intent transition: {result.WorkingIntentTransitionStatus}");
+            _writer.WriteLine($"Working-intent rank delta: {FormatStateRankDelta(result.WorkingIntentRankDelta)}");
+            _writer.WriteLine($"Support identifiers: {FormatOptional(result.LeftSupportIdentifier)} vs {FormatOptional(result.RightSupportIdentifier)}");
+            _writer.WriteLine($"Stability classes: {result.LeftStabilityClass} vs {result.RightStabilityClass}");
+            _writer.WriteLine($"Constraint energy delta: {result.ConstraintEnergyDelta:0.000000}");
+            _writer.WriteLine($"Burden preservation: {result.LeftBurdenPreservationScore:0.000000} vs {result.RightBurdenPreservationScore:0.000000}");
+            _writer.WriteLine($"Shared support signals: {result.SharedSupportSignalCount}");
+            _writer.WriteLine($"Shared validation questions: {result.SharedValidationQuestionCount}");
+            _writer.WriteLine($"Similarity score: {result.SimilarityScore:0.000000}");
+            _writer.WriteLine($"Classification reason: {result.ClassificationReason}");
+            _writer.WriteLine($"Payload mode: {result.PayloadMode}");
+            WriteSignalSection("Signals", result.Signals);
+            WriteSignalSection("Left issues", result.LeftIssues);
+            WriteSignalSection("Right issues", result.RightIssues);
+            WriteValidationIssueSection("Left validation issues", result.LeftValidationIssues);
+            WriteValidationIssueSection("Right validation issues", result.RightValidationIssues);
+        }
+
+        return result.Classification switch
+        {
+            "CoherentSupport" or "StrengthenedSupport" or "DivergentSupport" or "RestrictedSupport" or "DeferredSupport" or "RejectedSupport" => 0,
+            "IncompatibleSupportType" => 24,
+            _ => 25
+        };
+    }
+
     private int Reserved(string commandName, int phase)
     {
         _writer.WriteLine(ReservedPhaseCommand.BuildMessage(commandName, phase));
@@ -426,19 +548,29 @@ public sealed class CliRunner
         _writer.WriteLine("  new-phase3-divergent-peer-sample --output-dir <dir> --name <artifact> [--display-name <text>] [--signer <name>] [--key-id <id>] [--json]");
         _writer.WriteLine("  new-phase3-incompatible-basis-sample --output-dir <dir> --name <artifact> [--display-name <text>] [--signer <name>] [--key-id <id>] [--json]");
         _writer.WriteLine("  new-phase3-invalid-sample --output-dir <dir> --name <artifact> [--display-name <text>] [--signer <name>] [--key-id <id>] [--json]");
+        _writer.WriteLine("  new-phase4-perspectival-sample --output-dir <dir> --name <artifact> [--display-name <text>] [--signer <name>] [--key-id <id>] [--json]");
+        _writer.WriteLine("  new-phase4-perspectival-peer-sample --output-dir <dir> --name <artifact> [--display-name <text>] [--signer <name>] [--key-id <id>] [--json]");
+        _writer.WriteLine("  new-phase4-restricted-perspectival-sample --output-dir <dir> --name <artifact> [--display-name <text>] [--signer <name>] [--key-id <id>] [--json]");
+        _writer.WriteLine("  new-phase4-deferred-perspectival-sample --output-dir <dir> --name <artifact> [--display-name <text>] [--signer <name>] [--key-id <id>] [--json]");
+        _writer.WriteLine("  new-phase4-invalid-perspectival-sample --output-dir <dir> --name <artifact> [--display-name <text>] [--signer <name>] [--key-id <id>] [--json]");
+        _writer.WriteLine("  new-phase4-participatory-sample --output-dir <dir> --name <artifact> [--display-name <text>] [--signer <name>] [--key-id <id>] [--json]");
+        _writer.WriteLine("  new-phase4-participatory-peer-sample --output-dir <dir> --name <artifact> [--display-name <text>] [--signer <name>] [--key-id <id>] [--json]");
+        _writer.WriteLine("  new-phase4-rejected-participatory-sample --output-dir <dir> --name <artifact> [--display-name <text>] [--signer <name>] [--key-id <id>] [--json]");
+        _writer.WriteLine("  new-phase4-invalid-participatory-sample --output-dir <dir> --name <artifact> [--display-name <text>] [--signer <name>] [--key-id <id>] [--json]");
         _writer.WriteLine("  validate --path <manifest-or-png> [--json]");
         _writer.WriteLine("  show --path <manifest-or-png> [--view prime|privileged] [--json]");
         _writer.WriteLine("  merge-layers --path <manifest-or-png> [--json]");
         _writer.WriteLine("  render-phase-stack --path <manifest-or-png> [--view prime|privileged] [--h <raw-slice-horizon>] [--json]");
         _writer.WriteLine("  compare-phase-stacks --left <manifest-or-png> --right <manifest-or-png> [--view prime|privileged] [--h <raw-slice-horizon>] [--json]");
+        _writer.WriteLine("  compare-engram-support --left <manifest-or-png> --right <manifest-or-png> [--view prime|privileged] [--json]");
         _writer.WriteLine("  compare-surfaces --left <manifest-or-png> --right <manifest-or-png> [--json]");
         _writer.WriteLine("  invoke-formation | bind-oe");
         _writer.WriteLine("Exit codes:");
         _writer.WriteLine("  0  lawful success, valid temporal render, or aligned comparison result");
         _writer.WriteLine("  21 reserved later-phase command invoked");
-        _writer.WriteLine("  24 temporal derivation incomplete or basis-incompatible temporal comparison");
-        _writer.WriteLine("  25 flattened, unsupported, or invalid derivation or comparison surface");
-        _writer.WriteLine("  10-23 validation failures returned from the core validator");
+        _writer.WriteLine("  24 temporal derivation incomplete, basis-incompatible comparison, or support-type-incompatible engram comparison");
+        _writer.WriteLine("  25 flattened, unsupported, counterfeit, or invalid derivation or comparison surface");
+        _writer.WriteLine("  10-36 validation failures returned from the core validator");
     }
 
     private void WriteHorizonSummarySection(IReadOnlyList<TemporalHorizonSummary> horizonSummaries)
@@ -506,6 +638,35 @@ public sealed class CliRunner
         {
             WriteIndented = true
         }));
+    }
+
+    private static NewHopngRequest BuildArtifactRequest(CliOptions options) =>
+        new(
+            options.Require("output-dir"),
+            options.Require("name"),
+            options.Get("signer", Environment.UserName),
+            options.Get("key-id", "local-dev-key"),
+            options.Get("display-name"),
+            options.Get("artifact-id"),
+            options.Get("private-key"),
+            options.Get("private-key-out"),
+            options.Get("public-key-out"));
+
+    private void WritePhase4CreateResult(LoadedHopngArtifact artifact, bool asJson)
+    {
+        Write(new
+        {
+            artifactId = artifact.Manifest.ArtifactId,
+            manifest = artifact.Layout.ManifestPath,
+            projection = artifact.Layout.ProjectionPath,
+            signature = artifact.Layout.SignaturePath,
+            perspectivalEngram = File.Exists(artifact.Layout.PerspectivalEngramPath)
+                ? artifact.Layout.PerspectivalEngramPath
+                : null,
+            participatoryEngram = File.Exists(artifact.Layout.ParticipatoryEngramPath)
+                ? artifact.Layout.ParticipatoryEngramPath
+                : null
+        }, asJson);
     }
 }
 

@@ -1,0 +1,1 @@
+{"artifactId":"71ee9640-daa7-4abd-8980-83bc53607f14","relations":[{"relationId":"glue-1","relationType":"projection-support","requiredForFormation":true,"sourceUniverseId":"cryptic-support","targetUniverseId":"prime-projection"}],"schema":"oan.hopng_gluing_manifest","schemaVersion":"0.1.0"}

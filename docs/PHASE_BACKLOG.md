@@ -5,10 +5,26 @@ This document is the execution-oriented companion to [`PHASE_ROADMAP.md`](./PHAS
 ## Current Execution Topology
 
 - active main lane: post-release maintenance of the approved Phase 3 single-clock temporal operator surface
+- active Phase 4 bridge lane: bounded entry cascade through validator-first engram scaffolding
 - active promotion-prep lane: validator-first promotion prep for Phase 3 Milestone 4 without carrier-first implementation
+- active local automation lane: manual-first, scheduler-ready HDT release-candidate receipts, digests, and live `.audit` status surfaces
+- active local automation visibility surface: public wrapper-backed readout over live cycle, tasking, and orchestration state
+- active local automation receipt surface: public wrapper-backed readout over the latest or requested release-candidate bundle and digest
+- active local automation steward surface: root-standing reconciliation, triad emission, and lighter work-report cadence inside the bounded HDT lane
 - promoted doctrine: operator cascade governance, honest substrate principles, and the `.hogif` planning stack now constrain future work even though they are not active carrier implementation
 - deferred research lane: Phase 3 Milestone 4 heterochronous continuity research, validator-first examples, and promotion criteria
-- blocked later lanes: Phases 4 through 6 remain downstream of the stabilized Phase 3 release baseline and later promotion of stable identity-morphism and async-channel rules
+- blocked later lanes: Phase 4 work beyond the entry bridge, plus Phases 5 through 6, remain downstream of the stabilized Phase 3 release baseline and later promotion of stable identity-morphism and async-channel rules
+
+## Interlaced Build Mapping
+
+When the wider OAN stack is present, the current milestone map should be read through [`INTERLACED_MILESTONE_MAPPING.md`](./INTERLACED_MILESTONE_MAPPING.md).
+
+The short version is:
+
+- `OAN Tech Stack` still owns executable truth
+- `Documentation Repo` still owns doctrine and chapter uptake truth
+- `GNOMERONACORDE` still carries first-run and pedagogy law
+- HDT currently returns an optional governed artifact lane, not a mandatory runtime substrate
 
 ## Phase 1: Trusted Artifact Existence
 
@@ -143,7 +159,7 @@ See [`PHASE_3_RELEASE_READY.md`](./PHASE_3_RELEASE_READY.md).
 
 ### Status
 
-Planned after event and phase semantics are stable.
+Entry cascade active. Milestone 1 validator-first engram scaffolding is now the admitted bridge from the approved Phase 3 baseline into later identity-bearing work, and the first executable support-only schema and validation slice is in place.
 
 ### Goal
 
@@ -151,12 +167,25 @@ Allow identity-bearing and perspective-bearing artifact forms to emerge on top o
 
 ### Backlog
 
-- implement perspectival engram schema
-- implement participatory engram schema
-- implement nearby or Peral universe set representation
-- implement modal transform representation
-- add compact family and branching-form persistence
-- add engram comparison and inspection workflows
+- keep Phase 4 support-only validation aligned with the working-intent stance ladder and stop lines
+- keep `intentClassification`, `supportShape`, and state-reason markers machine-checkable as the stance ladder deepens
+- deepen Prime-safe inspection so support posture is legible without exposing protected constructor evidence
+- align capture-profile guidance with the machine-readable perspectival and participatory support sidecars
+- extend Phase 4 comparison corpora beyond the initial root coherence, branch coherence, counterfeit support, and lawful negative-state lane
+- keep Phase 4 smoke paths aligned with the active wrapper surface and posture-aware repo checks
+- defer runtime, candidacy, commitment, and OE/Sanctuary semantics until the entry bridge is stable
+
+### Entry Bridge
+
+See [`PHASE_4_ENTRY_CRITERIA.md`](./PHASE_4_ENTRY_CRITERIA.md).
+
+### Admitted Milestone 1
+
+See [`PHASE_4_MILESTONE_1.md`](./PHASE_4_MILESTONE_1.md).
+
+### Working-Intent Stances
+
+See [`PHASE_4_WORKING_INTENT_TRANSITIONS.md`](./PHASE_4_WORKING_INTENT_TRANSITIONS.md).
 
 ## Phase 5: Formation, Commitment, and Covenant State
 
@@ -205,5 +234,10 @@ Bind lawful artifacts into Sanctuary and OE runtime life as governed witnesses.
 - prefer explicit sidecars and comparison logic over hidden or inferred semantics
 - treat Prime-safe and Cryptic boundaries as invariant across all phases
 - proceed under bounded cascade authorization during normal build execution and pause only at explicit HITL boundaries
+- keep local automation claims aligned with the `Initial` / `Formal` / `Closing` / `Approved` posture ladder and its research best-practice mapping
+- keep the parent automation cycle aligned with the child repo-check primitive so `.audit` receipts never outrun actual verification
+- keep the public automation visibility wrapper aligned with the emitted `.audit` schema so operators are not forced back to raw state files
+- keep the public automation receipt wrapper aligned with emitted bundle and digest contracts so operators are not forced back to raw receipt files
+- keep the steward-form triad and work-report surfaces aligned with what the local lane can really enforce today, not with broader future control-language ambitions
 - do not leave implemented work stranded in planning-only documents
 - do not promote research-lane work into the main lane without explicit validation, examples, and honest maturity claims

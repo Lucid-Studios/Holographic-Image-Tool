@@ -19,6 +19,8 @@ public sealed record HopngArtifactLayout
     public string PhaseSlicePath => Path.Combine(DirectoryPath, $"{BaseName}.phase-slices.json");
     public string PhasePolicyPath => Path.Combine(DirectoryPath, $"{BaseName}.phase-policy.json");
     public string OpticalChannelsPath => Path.Combine(DirectoryPath, $"{BaseName}.optical-channels.json");
+    public string PerspectivalEngramPath => Path.Combine(DirectoryPath, $"{BaseName}.perspectival-engram.json");
+    public string ParticipatoryEngramPath => Path.Combine(DirectoryPath, $"{BaseName}.participatory-engram.json");
     public string HashPath => Path.Combine(DirectoryPath, $"{BaseName}.hash.json");
     public string SignaturePath => Path.Combine(DirectoryPath, $"{BaseName}.signature.json");
     public string PrivateKeyPath => Path.Combine(DirectoryPath, $"{BaseName}.ed25519.private.key");

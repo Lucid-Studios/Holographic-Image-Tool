@@ -2,6 +2,7 @@ bin/
 obj/
 .vs/
 TestResults/
+.audit/
 examples/**/*.ed25519.private.key
 examples/**/*.private.public.key
 examples/manual*

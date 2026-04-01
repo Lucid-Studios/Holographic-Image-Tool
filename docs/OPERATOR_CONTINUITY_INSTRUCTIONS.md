@@ -26,3 +26,32 @@ Operate under bounded cascade authorization for the active Holographic Data Tool
 Escalate only for new domain entry, failed or ambiguous verification, destructive actions, governance-sensitive changes, cryptic-layer semantic shifts, or final promotion and commit decisions.
 
 Otherwise preserve momentum, receipts, and lawful continuity of execution.
+
+## Automation Postures
+
+When local automation is used to support the active build lane, its claim strength should follow the posture ladder in [`LOCAL_AUTOMATION_POSTURES.md`](./LOCAL_AUTOMATION_POSTURES.md).
+
+That ladder distinguishes:
+
+- `Initial` exploratory checks
+- `Formal` reproducible positive-path checks
+- `Closing` pre-promotion closeout checks
+- `Approved` operator-approved adoption posture
+
+Automation may verify the mechanics of any posture. It must not treat the `Approved` posture as self-granted authority.
+
+## Interlaced Reading Order
+
+When `OAN Tech Stack`, `Documentation Repo`, and `GNOMERONACORDE` are all available locally, follow the current interlace recorded on March 31, 2026 in `Documentation Repo/architecture/oan-tech-stack-build-interlace-summary.md`.
+
+The operational reading order is:
+
+1. read current executable truth from `OAN Tech Stack` first
+2. consult `Documentation Repo` for stabilized doctrine, chapter uptake, and publication-facing interpretation
+3. treat `GNOMERONACORDE` as governed first-run, certification, and pedagogy law rather than direct runtime authority
+4. use `Holographic Data Tool` as an optional `.hopng` validation, inspection, and evidence-support lane
+5. return only receipted, admitted law back into the active build lane
+
+If executable truth and doctrine posture appear to disagree, reconcile that conflict explicitly rather than silently choosing a side. If the conflict cannot be resolved within current standing, pause for HITL.
+
+Chapter `5` through chapter `9` may inform build-facing uptake through packets, readiness notes, and first-run doctrine, but they do not by themselves grant mutation authority over the active executable lane.

@@ -159,11 +159,13 @@ Artifacts can carry coherent engrammatic forms.
 - modal transform representation
 - compact surface families and branching graph forms
 - engram comparison workflows
+- support-first working-intent stance transitions before Phase 5 decision semantics
 
 ### Dependencies
 
 - Phase 2 lawful relationality
 - Phase 3 event and phase semantics
+- stable entry criteria that keep engram support distinct from candidacy, commitment, and runtime authority
 
 ### Acceptance Criteria
 
@@ -176,6 +178,24 @@ Artifacts can carry coherent engrammatic forms.
 
 - commitment, formation, or covenant state
 - role-bound Sanctuary continuity
+
+### Entry Bridge
+
+Phase 4 should begin through a bounded entry cascade rather than through open-ended schema or runtime implementation.
+
+That bridge should:
+
+- inherit the approved Phase 3 temporal baseline rather than redefining it
+- treat initial engram artifacts as evidence-support surfaces first
+- reserve candidacy, commitment, and runtime authority for later phases
+
+It should also define a stance ladder for how working intent matures before the stronger `review / accept / defer / reject / restrict` grammar begins in Phase 5.
+
+The first executable slice of that bridge now exists as support-only perspectival and participatory sidecars, validator rules, wrapper-backed sample builders, and posture-aware smoke paths.
+
+That executable slice now also machine-checks support-shape and intent-class markers, and it preserves lawful negative support states through committed `restricted_support`, `deferred_support`, and `rejected_support` reference artifacts plus wrapper-backed comparison.
+
+See [`PHASE_4_ENTRY_CRITERIA.md`](./PHASE_4_ENTRY_CRITERIA.md), [`PHASE_4_MILESTONE_1.md`](./PHASE_4_MILESTONE_1.md), and [`PHASE_4_WORKING_INTENT_TRANSITIONS.md`](./PHASE_4_WORKING_INTENT_TRANSITIONS.md).
 
 ## Phase 5: Formation, Commitment, and Covenant State
 
@@ -267,6 +287,7 @@ The semantic roadmap is broader than the active implementation lane.
 The current admitted implementation lane is:
 
 - post-release maintenance of the approved Phase 3 single-clock `.hopng` temporal surface
+- bounded Phase 4 entry cascade through validator-first engram scaffolding
 - validator-first promotion prep for the deferred Phase 3 Milestone 4 research lane
 
 Promoted doctrine now constraining that lane includes:
@@ -278,11 +299,13 @@ Promoted doctrine now constraining that lane includes:
 
 Those promoted doctrines do not mean `.hogif` is now an active implementation target. They mean future work already has accepted boundaries and stop lines.
 
+For the broader build-facing meaning of the current milestone set inside the wider OAN interlace, see [`INTERLACED_MILESTONE_MAPPING.md`](./INTERLACED_MILESTONE_MAPPING.md).
+
 The deferred research lane is:
 
 - Phase 3 Milestone 4 heterochronous continuity research and validator-first planning
 
-Phases 4 through 6 remain blocked behind the stabilized Phase 3 release baseline and the later promotion of stable identity-morphism and async-channel prerequisites.
+Later Phase 4 implementation beyond the entry bridge, plus Phases 5 and 6, remain blocked behind the stabilized Phase 3 release baseline and the later promotion of stable identity-morphism and async-channel prerequisites.
 
 ## Current Status
 
@@ -291,6 +314,11 @@ Phases 4 through 6 remain blocked behind the stabilized Phase 3 release baseline
 - Phase 3 Milestones 1 through 3 are implemented on the single-clock temporal lane
 - the single-clock Phase 3 release baseline was approved on March 30, 2026
 - post-release maintenance of the approved Phase 3 temporal surface is the current admitted main lane
+- the Phase 4 entry cascade is now admitted through a validator-first Milestone 1 bridge
+- the first executable Phase 4 support-only schema, validation slice, machine-checked transition markers, committed lawful/unlawful reference corpora, lawful negative-state corpus, and wrapper-backed support comparison lane are now in the active build lane
+- inside the wider OAN interlace, those active HDT milestones currently map to an optional governed artifact evidence lane rather than a mandatory runtime substrate
 - Phase 3 Milestone 4 is promoted as a research-lane planning dependency and does not change the approved single-clock release baseline
+- that research-only Milestone 4 boundary exists because async timing and morphism law are still doctrine and validator constraints, not admitted executable truth
+- the active Phase 4 boundary exists because support evidence is allowed to mature, but runtime identity authority is not yet admitted
 - Phases 4 through 6 remain defined here as the governing semantic roadmap
 - [`DEVELOPMENT_PATH.md`](./DEVELOPMENT_PATH.md) and [`PHASE_BACKLOG.md`](./PHASE_BACKLOG.md) remain the execution-oriented companion documents
