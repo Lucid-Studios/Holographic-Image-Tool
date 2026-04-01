@@ -1214,6 +1214,13 @@ $receiptDocument = [ordered]@{
     failureReasons = $failureReasons.ToArray()
 }
 
+$activeHolds = if ($failureReasons.Count -gt 0) {
+    [object[]]$failureReasons.ToArray()
+}
+else {
+    [object[]]@($orchestrationReasons | Where-Object { $_ -notlike "*aligned*" })
+}
+
 $noticeDocument = [ordered]@{
     schemaVersion = 1
     bundleId = $bundleId
@@ -1225,7 +1232,7 @@ $noticeDocument = [ordered]@{
     nextReleaseCandidateRunUtc = $cycleStateDocument.nextRecommendedReleaseCandidateRunUtc
     nextMandatoryHitlDigestRunUtc = $cycleStateDocument.nextMandatoryHitlDigestRunUtc
     hitlRequired = ($cycleStatus -eq "hitl-required")
-    activeHolds = if ($failureReasons.Count -gt 0) { $failureReasons.ToArray() } else { @($orchestrationReasons | Where-Object { $_ -notlike "*aligned*" }) }
+    activeHolds = @($activeHolds)
     downstreamAssumptions = @(
         "OAN Tech Stack remains executable truth.",
         "Documentation Repo remains the first lawful compile surface.",
@@ -1314,7 +1321,7 @@ $workReportDocument = if ($workReportDue) {
             "Digest emitted: $digestDue",
             "Work report emitted: $workReportDue"
         )
-        activeHolds = if ($failureReasons.Count -gt 0) { $failureReasons.ToArray() } else { @($orchestrationReasons | Where-Object { $_ -notlike "*aligned*" }) }
+        activeHolds = @($activeHolds)
         nextLawfulAction = $recommendedAction
         hitlRequired = ($cycleStatus -eq "hitl-required")
     }

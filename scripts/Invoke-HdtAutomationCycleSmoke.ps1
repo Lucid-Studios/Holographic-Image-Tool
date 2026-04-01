@@ -110,6 +110,8 @@ try {
 
         $manifest = Read-Json -Path (Join-Path $releaseBundle.FullName "build-evidence-manifest.json")
         $digest = Read-Json -Path (Join-Path $digestBundle.FullName "release-candidate-digest.json")
+        $noticeRaw = Get-Content -Raw -Path (Join-Path $releaseBundle.FullName "notice.json")
+        $workReportRaw = Get-Content -Raw -Path (Join-Path $workReportBundle.FullName "work-report.json")
 
         if ($manifest.status -ne "candidate-ready") {
             throw "Initial automation manifest did not stay candidate-ready."
@@ -117,6 +119,14 @@ try {
 
         if ($digest.status -ne "candidate-ready") {
             throw "Initial automation digest did not stay candidate-ready."
+        }
+
+        if ($noticeRaw -notmatch '"activeHolds"\s*:\s*\[') {
+            throw "Initial automation notice did not preserve activeHolds as an array."
+        }
+
+        if ($workReportRaw -notmatch '"activeHolds"\s*:\s*\[') {
+            throw "Initial automation work report did not preserve activeHolds as an array."
         }
     }
 

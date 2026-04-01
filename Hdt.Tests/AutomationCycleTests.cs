@@ -94,6 +94,20 @@ public sealed partial class AutomationCycleTests
         {
             digest.RootElement.GetProperty("note").GetString().Should().Contain("explicit HITL approval is still required");
         }
+
+        using var notice = JsonDocument.Parse(File.ReadAllText(noticeJsonPath));
+        notice.RootElement.GetProperty("activeHolds").ValueKind.Should().Be(JsonValueKind.Array);
+        notice.RootElement.GetProperty("activeHolds").EnumerateArray()
+            .Select(item => item.ValueKind)
+            .Should()
+            .OnlyContain(kind => kind == JsonValueKind.String);
+
+        using var workReport = JsonDocument.Parse(File.ReadAllText(workReportJsonPath));
+        workReport.RootElement.GetProperty("activeHolds").ValueKind.Should().Be(JsonValueKind.Array);
+        workReport.RootElement.GetProperty("activeHolds").EnumerateArray()
+            .Select(item => item.ValueKind)
+            .Should()
+            .OnlyContain(kind => kind == JsonValueKind.String);
     }
 
     [Fact]
