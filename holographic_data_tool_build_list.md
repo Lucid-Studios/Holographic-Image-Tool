@@ -101,6 +101,7 @@ The main lane should currently prioritize:
 - preserving Phase 4 lawful and unlawful support corpora as committed public-safe references before stronger identity claims are allowed
 - preserving Phase 4 support comparison as a wrapper-backed and corpus-backed surface for strengthened support, branch coherence, lawful negative support states, and counterfeit pressure
 - keeping the working-intent stance ladder machine-checkable before Phase 5 review semantics begin
+- defining the bounded Engineered Cognition capture-bundle and deterministic render-policy contract needed to replace placeholder PNG projections with lawful signed image output
 - keeping HDT aligned with the wider OAN interlace so `OAN Tech Stack` remains executable truth, `Documentation Repo` remains doctrine truth, and `.hopng` stays optional and bounded until further promotion
 - keeping temporal examples public-safe and deterministic
 - expanding lawful and unlawful temporal comparison reference sets

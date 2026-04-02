@@ -171,6 +171,8 @@ Allow identity-bearing and perspective-bearing artifact forms to emerge on top o
 - keep `intentClassification`, `supportShape`, and state-reason markers machine-checkable as the stance ladder deepens
 - deepen Prime-safe inspection so support posture is legible without exposing protected constructor evidence
 - align capture-profile guidance with the machine-readable perspectival and participatory support sidecars
+- define the bounded Engineered Cognition capture-bundle contract required for the first non-placeholder `.hopng` line
+- add a deterministic render-policy surface so captured slice state can map lawfully into signed projection output
 - extend Phase 4 comparison corpora beyond the initial root coherence, branch coherence, counterfeit support, and lawful negative-state lane
 - keep Phase 4 smoke paths aligned with the active wrapper surface and posture-aware repo checks
 - defer runtime, candidacy, commitment, and OE/Sanctuary semantics until the entry bridge is stable

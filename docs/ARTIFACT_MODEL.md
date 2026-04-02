@@ -26,6 +26,11 @@ Phase 1 defines a `.hopng` as a visible PNG projection plus deterministic sideca
 - `*.phase-policy.json`: raw cadence, event grouping, phase window mode, explicit phase-window duration and max span, legacy raw comparison horizon, explicit comparison-horizon declarations, aggregation, explicit temporal state thresholds, and inspection policy
 - `*.optical-channels.json`: channel catalog declaring required and reserved temporal channels and their canonical analytic meaning
 
+## Phase 4 support sidecars
+
+- `*.perspectival-engram.json`: support-only root-constructor support posture, working-intent state, intent classification, protected evidence refs, and review-bound support signals
+- `*.participatory-engram.json`: support-only branch-set support posture, working-intent state, intent classification, participant-branch support states, protected evidence refs, and review-bound support signals
+
 ## Validation rules
 
 - all required files must exist beside the PNG projection
@@ -74,6 +79,19 @@ When Phase 3 sidecars are declared:
 `render-phase-stack` derives and validates a single-artifact temporal stack from the Phase 3 sidecars. It reports observed-set duration, raw cadence, event and phase slice counts, explicit timestamp spans, required-channel coverage, explicit comparison-horizon summaries, drift flags, relation-graph topology changes, and temporal state summaries backed by the explicit phase-policy thresholds and horizon basis.
 
 `compare-phase-stacks` compares two lawful Phase 3 artifacts under explicit basis alignment. It reports basis compatibility, final state compatibility, drift and derived-force deltas, topology delta count, state-rank delta, classification reason, and deterministic classification into `Convergent`, `Delayed`, `Divergent`, `Incompatible`, or `FlattenedOrUnsupported`. The comparison remains policy-first: there is no hidden normalization, interpolation, or image-native rendering step.
+
+## Capture-Bundle Boundary
+
+The first non-placeholder `.hopng` line should be built from a bounded Engineered Cognition capture bundle rather than from full holographic or runtime-bearing cognition claims. See [`EC_CAPTURE_BUNDLE.md`](./EC_CAPTURE_BUNDLE.md).
+
+The current model already supports the major bundle surfaces through event slices, phase policy, universe declarations, layer assignment, depth bounds, optical channel declarations, and Phase 4 support sidecars.
+
+One important boundary remains:
+
+- `*.optical-channels.json` declares channel vocabulary and canonical meaning
+- `*.projection-rules.json` declares source universes, target projection roles, mapping types, and precedence
+
+Those sidecars do not yet fully encode numeric state-to-pixel transfer behavior. A deterministic render-policy surface is therefore still required before HDT can honestly replace the placeholder PNG with a semantically complete rendered projection.
 
 ## Prime-safe inspection
 

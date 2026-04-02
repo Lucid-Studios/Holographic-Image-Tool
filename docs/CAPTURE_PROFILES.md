@@ -212,6 +212,8 @@ Its lawful maturity should therefore move through the Phase 4 working-intent sta
 
 The current executable Phase 4 support sidecars also require machine-checked `intentClassification` and `supportShape` markers so this profile can stay aligned with actual validator behavior rather than drifting into doc-only language.
 
+The first non-placeholder `.hopng` line from `EC` should therefore arrive as a bounded capture bundle rather than as a claim of complete holographic cognition. See [`EC_CAPTURE_BUNDLE.md`](./EC_CAPTURE_BUNDLE.md).
+
 ### Current Phase 4 Marker Mapping
 
 For the active support-only Phase 4 bridge, `engram_root_constructor_capture` currently aligns to the machine-checked support markers this way:
@@ -248,6 +250,20 @@ The artifact should support validation of:
   - high-depth coherence, strain, or support field
 - `engram.provenance.pointer`
   - protected provenance and source-observation references
+
+### First EC Handoff
+
+For the first real image-generation path, `EC` should hand HDT one bounded capture package per cognitive event containing:
+
+- event metadata and slice timing
+- per-slice universe states
+- protected evidence refs and digests
+- universe, layer, and depth assignment
+- optical channel declaration
+- deterministic projection policy
+- optional perspectival or participatory support posture
+
+This keeps the capture profile aligned with the active validator-first bridge. The profile constrains what the artifact may claim; the bounded capture bundle constrains what data the renderer may lawfully use.
 
 ### Invariants
 
