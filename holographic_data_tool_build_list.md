@@ -102,6 +102,7 @@ The main lane should currently prioritize:
 - preserving Phase 4 support comparison as a wrapper-backed and corpus-backed surface for strengthened support, branch coherence, lawful negative support states, and counterfeit pressure
 - keeping the working-intent stance ladder machine-checkable before Phase 5 review semantics begin
 - defining the bounded Engineered Cognition capture-bundle and deterministic render-policy contract needed to replace placeholder PNG projections with lawful signed image output
+- keeping the Sanctuary EC lab bridge readable from the GitHub repo so ChatGPT-app review can understand HDT as a holographic slice and inspection lane without local PC file access
 - keeping HDT aligned with the wider OAN interlace so `OAN Tech Stack` remains executable truth, `Documentation Repo` remains doctrine truth, and `.hopng` stays optional and bounded until further promotion
 - keeping temporal examples public-safe and deterministic
 - expanding lawful and unlawful temporal comparison reference sets
@@ -116,6 +117,7 @@ These planning items are now mature enough to constrain future work even though 
 - operator cascade governance
 - heterochronous timing doctrine
 - admissible identity morphism law
+- Sanctuary EC holographic slice and inspection bridge
 - `.hogif` build governance and research sequence
 
 They should shape boundaries and promotion decisions, but they should not be mistaken for carrier-ready implementation.

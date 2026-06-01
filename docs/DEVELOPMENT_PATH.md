@@ -53,6 +53,11 @@ Chapter `5` through chapter `9` matter to this path because they already feed bu
 
 This repo should therefore keep `.hopng` optional and bounded for the wider stack until the active build lane promotes it further. HDT may strengthen evidence, inspection, and comparison posture; it must not counterfeit runtime authority.
 
+For GitHub-only or ChatGPT-app review of the Sanctuary/EC relationship, use
+[`SANCTUARY_EC_LAB_BRIDGE.md`](./SANCTUARY_EC_LAB_BRIDGE.md). That document is
+the portable lab-readability card for reading HDT as a holographic slice and
+inspection lane without requiring access to local-only files.
+
 ## Promoted Doctrine
 
 The following planning documents are mature enough to be treated as active build constraints rather than detached idea notes:
@@ -61,6 +66,7 @@ The following planning documents are mature enough to be treated as active build
 - [`OPERATOR_CONTINUITY_INSTRUCTIONS.md`](./OPERATOR_CONTINUITY_INSTRUCTIONS.md)
 - [`LOCAL_AUTOMATION_POSTURES.md`](./LOCAL_AUTOMATION_POSTURES.md)
 - [`HONEST_SUBSTRATE_PRINCIPLES.md`](./HONEST_SUBSTRATE_PRINCIPLES.md)
+- [`CONSTITUTIONAL_HARMONIC_THEORY.md`](./CONSTITUTIONAL_HARMONIC_THEORY.md)
 - [`PHASE_3_MILESTONE_4.md`](./PHASE_3_MILESTONE_4.md)
 - [`HOGIF_BUILD_GOVERNANCE.md`](./HOGIF_BUILD_GOVERNANCE.md)
 - [`HOGIF_ADMISSIBLE_IDENTITY_MORPHISMS.md`](./HOGIF_ADMISSIBLE_IDENTITY_MORPHISMS.md)
@@ -73,6 +79,11 @@ These documents do not authorize immediate `.hogif` implementation. They do esta
 - what must be validated before async or identity-bearing carrier work is allowed into the main lane
 - how strong a local automation claim may be at each development posture
 - how Phase 4 working intent must mature before Phase 5 review and commitment semantics begin
+- how future shell, autobiographical-memory, projection, and inheritance work
+  must stay characterization-first, discernment-bound, and honest about
+  bounded observability
+- how HDT may serve Sanctuary Engineered Cognition as a repository-readable
+  holographic slice and inspection lane without becoming runtime authority
 
 ## Deferred Research Lane
 
@@ -145,6 +156,7 @@ The repo-wide development path now reads as:
 8. deepen Phase 4 engrammatic emergence only after the entry bridge proves that support evidence, inspection posture, and identity stop lines are stable enough not to be reinvented midstream
 9. begin Phase 5 only after engrammatic structures are lawful enough to witness review, commitment, and covenant-bearing state
 10. begin Phase 6 only after commitment-bearing artifacts are stable enough for governed runtime participation
+11. promote Sanctuary-facing holographic slice frames only after the bounded EC capture bundle, support-only engram posture, lawful/unlawful examples, and validation behavior remain legible from the GitHub-visible repo without relying on local-only files
 
 ## No-Decay Rules
 

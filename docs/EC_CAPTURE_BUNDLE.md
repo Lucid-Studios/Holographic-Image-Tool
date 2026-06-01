@@ -16,6 +16,11 @@ The first non-placeholder `.hopng` line should be built from a bounded capture b
 
 This keeps HDT aligned with the current validator-first Phase 4 bridge while making room for a real image-generation path.
 
+For the broader Sanctuary formation-loop reading of this handoff, see
+[`SANCTUARY_EC_LAB_BRIDGE.md`](./SANCTUARY_EC_LAB_BRIDGE.md). That bridge keeps
+the capture bundle framed as bounded inspection support, not as a complete
+continuity body, GEL admission, SelfGEL mutation, or runtime authority.
+
 ## Required Surfaces
 
 For the first real `.hopng` line, `EC` should emit six surfaces:

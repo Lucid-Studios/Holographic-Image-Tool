@@ -155,6 +155,8 @@ The parent HDT-local automation lane and its receipt surfaces are recorded in [d
 
 The steward-form loop and its current machine-enforced boundary are recorded in [docs/HDT_AUTOMATION_STEWARD_LOOP.md](docs/HDT_AUTOMATION_STEWARD_LOOP.md).
 
+The Sanctuary EC lab bridge and ChatGPT-readable holographic slice orientation are recorded in [docs/SANCTUARY_EC_LAB_BRIDGE.md](docs/SANCTUARY_EC_LAB_BRIDGE.md). This bridge explains how HDT supports Engineered Cognition formation-loop inspection without claiming GEL/SelfGEL admission, runtime identity authority, or `.hogif` implementation.
+
 Community and contribution guidance lives in:
 
 - [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md)
