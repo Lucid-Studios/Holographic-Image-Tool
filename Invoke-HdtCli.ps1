@@ -14,5 +14,6 @@ param(
 )
 
 $project = Join-Path $PSScriptRoot "Hdt.Cli\Hdt.Cli.csproj"
-& dotnet run --project $project --no-build --no-restore -- $Command @RemainingArgs
+$configuration = if ([string]::IsNullOrWhiteSpace($env:HDT_DOTNET_CONFIGURATION)) { "Release" } else { $env:HDT_DOTNET_CONFIGURATION }
+& dotnet run --project $project --configuration $configuration --no-build --no-restore -- $Command @RemainingArgs
 exit $LASTEXITCODE
