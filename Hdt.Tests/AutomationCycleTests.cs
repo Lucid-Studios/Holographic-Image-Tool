@@ -409,7 +409,7 @@ public sealed partial class AutomationCycleTests
         orchestrationNode["reasons"] = reasons;
         File.WriteAllText(
             orchestrationStatusPath,
-            orchestrationNode.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+            orchestrationNode.ToJsonString(JsonFile.SerializerOptions));
 
         var jsonResult = RunPowerShellScript(
             Path.Combine(TestPaths.RepositoryRoot, "Show-HDTAutomationStatus.ps1"),
